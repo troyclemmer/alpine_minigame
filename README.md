@@ -7,4 +7,8 @@ Dodge minigame made in Alpine.js, just for fun<br>
 @technologies: alpine.js, jquery, css, html, fontawesome icons <br>
 @link: https://troyclemmer.dev/dodge/
 <br>
+doesn't work on mobile,
+<br>
+click the screen to move, and move from the green zone to the purple zone to clear the level
+<br>
 ### play at: https://troyclemmer.dev/dodge/
