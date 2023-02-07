@@ -11,7 +11,7 @@ background-color: #5c5c5c;">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpine.js Dodge Minigame</title>
+    <title>Alpine.js Dodge</title>
    <script
     src="https://code.jquery.com/jquery-3.6.3.min.js"
     integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
@@ -110,7 +110,8 @@ background-color: #5c5c5c;">
             slowmo_modifier: 1,
             deaths: 0,
             show_labels: false,
-            game_start: false
+            game_start: false,
+            modifier_weight: 1,
         },
         arena: { 
             id: 'arena',
@@ -164,7 +165,7 @@ background-color: #5c5c5c;">
                 border_color: '#7900ff',
                 size_min_diff: 5,
                 size_inc_diff: 1.25,
-                speed_min_diff: 30,
+                speed_min_diff: 24,
                 speed_inc_diff: 0.80
             },
             x: 0,
@@ -192,7 +193,7 @@ background-color: #5c5c5c;">
             min_speed: 0,
             max_speed: 0,
             defaults: {
-                number: 15,
+                number: 14,
                 size: 45,
                 speed: 2,
                 min_size: 5,
@@ -648,6 +649,12 @@ background-color: #5c5c5c;">
         },
         AssignModifiers()
         {
+            //set modifier weight for linear mode
+            if (this.game.mode===1)
+            {
+                this.game.modifier_weight = this.game.modifiers.length===1 ? 1 : this.game.modifiers.length * 0.5; //every modifier will be less potent based on how many modifiers there are in linear mode
+            }
+
             //can just loop modifiers and increment based on their increment 
             for (var i = 0; i < this.game.modifier_increments.length; i++) 
             {
@@ -658,7 +665,7 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     { 
-                        this.char.speed = parseFloat((this.char.defaults.speed_min_diff * (Math.pow(this.char.defaults.speed_inc_diff,increment_num))).toFixed(2));
+                        this.char.speed = parseFloat((this.char.defaults.speed_min_diff * (Math.pow(this.char.defaults.speed_inc_diff,increment_num/this.game.modifier_weight))).toFixed(2));
                     }
                     else if (increment_num === 0)
                     {
@@ -673,7 +680,7 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.char.size = Math.round(this.char.defaults.size_min_diff * (Math.pow(this.char.defaults.size_inc_diff,increment_num)));
+                        this.char.size = Math.round(this.char.defaults.size_min_diff * (Math.pow(this.char.defaults.size_inc_diff,increment_num/this.game.modifier_weight)));
                     }
                     else if (increment_num === 0)
                     {
@@ -688,8 +695,8 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.enemy.min_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num))).toFixed(2));
-                        this.enemy.max_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num))).toFixed(2));
+                        this.enemy.min_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num/this.game.modifier_weight))).toFixed(2));
+                        this.enemy.max_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num/this.game.modifier_weight))).toFixed(2));
                     }
                     else if (increment_num === 0)
                     {
@@ -706,8 +713,8 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.enemy.min_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num)));
-                        this.enemy.max_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num)));
+                        this.enemy.min_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num/this.game.modifier_weight)));
+                        this.enemy.max_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num/this.game.modifier_weight)));
                     }
                     else if (increment_num === 0)
                     {
@@ -724,7 +731,7 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.enemy.number = Math.ceil(this.enemy.defaults.number_min_diff * (Math.pow(this.enemy.defaults.number_inc_diff,increment_num)));
+                        this.enemy.number = Math.ceil(this.enemy.defaults.number_min_diff * (Math.pow(this.enemy.defaults.number_inc_diff,increment_num/this.game.modifier_weight)));
                     }
                     else if (increment_num === 0)
                     {
@@ -866,7 +873,7 @@ background-color: #5c5c5c;">
         <div style="margin-right:8px;">
         <div :style="{width: `${arena.width}px`}" style="margin-bottom:5px; padding-left:5px; padding-right:5px;">
             <div style="margin-top:10px; font-size:24px; color:#c4b5ff; text-align:center; margin-left:auto; margin-right:auto; font-weight: 900;">
-                Alpine.js Dodge Minigame
+                Alpine.js Dodge
             </div>
             <div style="margin-top:2px; margin-bottom:1px; font-size:12px; color:rgb(211, 211, 211); text-align:center; margin-left:auto; margin-right:auto;">
                 by <a style="color:rgb(211, 211, 211);" target="_blank" href="https://www.troyclemmer.com/">Troy Clemmer</a>
@@ -1198,7 +1205,7 @@ background-color: #5c5c5c;">
 <div x-show="game.mode===null" id="menu">
 
     <div style="margin-top:24px; font-size:39px; color:#c4b5ff; text-align:center; margin-left:auto; margin-right:auto; font-weight: 900;">
-        Alpine.js Dodge Minigame
+        Alpine.js Dodge
     </div>
     <div style="margin-top:4px; margin-bottom:1px; font-size:18px; color:rgb(211, 211, 211); text-align:center; margin-left:auto; margin-right:auto;">
         by <a style="color:rgb(211, 211, 211);" target="_blank" href="https://www.troyclemmer.com/">Troy Clemmer</a>
@@ -1219,7 +1226,7 @@ background-color: #5c5c5c;">
 <div x-show="game.mode!==null && (!game.game_start)">
 
     <div style="margin-top:24px; font-size:39px; color:#c4b5ff; text-align:center; margin-left:auto; margin-right:auto; font-weight: 900;">
-        Alpine.js Dodge Minigame
+        Alpine.js Dodge
     </div>
     <div style="margin-top:4px; margin-bottom:1px; font-size:18px; color:rgb(211, 211, 211); text-align:center; margin-left:auto; margin-right:auto;">
         by <a style="color:rgb(211, 211, 211);" target="_blank" href="https://www.troyclemmer.com/">Troy Clemmer</a>
