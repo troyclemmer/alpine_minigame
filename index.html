@@ -1,0 +1,1349 @@
+<!-- 
+@title: Alpine.js Dodge Minigame
+@author: Troy Clemmer
+@startdate: 2023-01-31
+@technologies: alpine.js, jquery, css, html, fontawesome icons
+-->
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;
+background-color: #5c5c5c;">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine.js Dodge Minigame</title>
+   <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+   <script
+    src="https://code.jquery.com/jquery-3.6.3.min.js"
+    integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
+    crossorigin="anonymous"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        font-family: 'Lato', sans-serif;
+        overflow-y: hidden;
+    }
+
+    .pulse_gotHit {
+	animation: pulse_gotHit 2s;
+	-webkit-animation: pulse_gotHit 2s;
+	-webkit-animation-timing-function:ease-in-out;
+	animation-timing-function:ease-in-out;
+}
+
+
+@keyframes pulse_gotHit {
+  0% {
+    box-shadow: 0 0 0 0 rgba(229, 70, 70, 0.6);
+  }
+  70% {
+      box-shadow: 0 0 0 30px rgba(255, 0, 0, 0.2);
+  }
+  100% {
+      box-shadow: 0 0 0 0 rgba(255,0,0, 0.1);
+  }
+}
+
+
+.pulse_finishLevel {
+	animation: pulse_finishLevel 2s;
+	-webkit-animation: pulse_finishLevel 2s;
+	-webkit-animation-timing-function:ease-in-out;
+	animation-timing-function:ease-in-out;
+}
+
+
+@keyframes pulse_finishLevel {
+  0% {
+    box-shadow: 0 0 0 0 rgba(121, 0, 255, .6);
+  }
+  70% {
+      box-shadow: 0 0 0 30px rgba(121, 0, 255, 0.2);
+  }
+  100% {
+      box-shadow: 0 0 0 0 rgba(255,0,0, 0.1);
+  }
+}
+
+
+[x-cloak] { display: none !important; }
+
+</style>
+
+<script defer src="fontawesome-all.min.js"></script>
+</head>
+<body style="margin-left:50px;">
+
+
+
+
+    <div x-data="{
+        game: { 
+            id: 'game_board',
+            level: 1,
+            mode: null,
+            modes: [
+            { 
+                id: 0, 
+                name: 'Sandbox', 
+                desc: 'Description of Sandbox'
+            },
+            { 
+                id: 1, 
+                name: 'Linear Modifier Mode', 
+                desc: 'Description of Linear Modifier Mode'
+            },
+            { 
+                id: 2, 
+                name: 'Random Combo Mode', 
+                desc: 'Description of Random Combo Mode'
+            }
+            //{ id: 3, name: 'Timed' }
+            ],            
+            modifiers: [],
+            modifier_increments: [-1,-1,-1,-1,-1],
+            potential_modifiers: ['Character Speed','Character Size','Enemy Speed','Enemy Size','Number of Enemies'],
+            fps: 100,
+            slowmo_modifier: 1,
+            deaths: 0,
+            show_labels: false,
+            game_start: false
+        },
+        arena: { 
+            id: 'arena',
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            defaults: {
+                width: 1100,
+                height: 600,
+                color: '#DDDDDD',
+                border_color: '#2c2c2c',
+                border_width: 8
+            },
+            color: null,
+            border_color: null,
+            border_width: 0,
+            constraits: {
+                max_width: 3000,
+                max_height: 750
+            }
+        },
+        safe_zone: {
+            id: 'safe_zone',
+            x: 0,
+            y: 0,
+            height: 0,
+            width: 0,
+            color: '#a3cfa466',
+            border_color: '#4caf50'
+        },
+        end_zone: {
+            id: 'end_zone',
+            x: 0,
+            y: 0,
+            height: 0,
+            width: 0,
+            color: '#b497ff66',
+            border_color: '#7900ff'
+        },
+        char: {
+            id: 'char',
+            going: false,
+            mouseHold: false,
+            size: 0,
+            speed: 0,
+            defaults: {
+                size: 24,
+                speed: 4,
+                color: '#7900ff',
+                border_color: '#7900ff',
+                size_min_diff: 5,
+                size_inc_diff: 1.25,
+                speed_min_diff: 30,
+                speed_inc_diff: 0.80
+            },
+            x: 0,
+            y: 0,
+            destX: 0,
+            destY: 0,
+            color: null,
+            border_color: null,
+            currently_transitioning: false
+        },
+        mi: {
+            id: 'mi',
+            x: 0,
+            y: 0,
+            color: 'rgb(223 192 252 / 40%)',
+            border_color: 'rgb(121 0 255 / 60%)',
+            active: false
+        },
+        enemy: {
+            instances: [],
+            number: 0,
+            color: null,
+            min_size: 0,
+            max_size: 0,
+            min_speed: 0,
+            max_speed: 0,
+            defaults: {
+                number: 15,
+                size: 45,
+                speed: 2,
+                min_size: 5,
+                max_size: 100,
+                min_speed: 0,
+                max_speed: 6,
+                color: '#FF0000',
+                size_min_diff: 5,
+                size_inc_diff: 1.25,
+                speed_min_diff: 0.4,
+                speed_inc_diff: 1.20,
+                number_min_diff: 1,
+                number_inc_diff: 1.25
+            }
+        },
+        StartGame() {
+
+            this.game.game_start = true;
+
+            this.$watch('enemy.number', () => this.SetEnemies());
+            
+            $interval(() => this.UpdateGame(), 1000/this.game.fps);
+            
+            this.$nextTick(() => 
+				{ 
+                    this.SetDefaults();                 
+				});
+        },
+        SetDefaults()
+        {
+            this.arena.width = this.arena.defaults.width;
+            this.arena.height = this.arena.defaults.height;
+            this.arena.color = this.arena.defaults.color;
+            this.arena.border_color = this.arena.defaults.border_color;
+            this.arena.border_width = this.arena.defaults.border_width;
+
+            this.char.size = this.char.defaults.size;
+            this.char.speed = this.char.defaults.speed;
+            this.char.color = this.char.defaults.color;
+            this.char.border_color = this.char.defaults.border_color;
+
+            this.enemy.color = this.enemy.defaults.color;
+
+            this.SetModifierDefaults();
+
+            setTimeout(() => this.SetupStartPositions(), 150); 
+        },
+        SetModifierDefaults() {
+            //sets the defaults of modifiers that are going to change to initialize them with the minimum difficulty
+
+            if (this.game.mode!==0)
+            {
+                for (var i = 0; i < this.game.modifiers.length; i++) 
+                {
+                    this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])] = 0;
+                }
+
+                this.enemy.min_speed = this.enemy.defaults.speed;
+                this.enemy.max_speed = this.enemy.defaults.speed;
+                this.enemy.min_size = this.enemy.defaults.size;
+                this.enemy.max_size = this.enemy.defaults.size;
+                this.enemy.number = this.enemy.defaults.number;
+
+                if (this.game.modifiers.indexOf('Character Speed') != -1)
+                {
+                    this.char.speed = this.char.defaults.speed_min_diff;
+                }
+                if (this.game.modifiers.indexOf('Character Size') != -1)
+                {
+                    this.char.size = this.char.defaults.size_min_diff;
+                }
+                if (this.game.modifiers.indexOf('Enemy Speed') != -1)
+                {
+                    this.enemy.min_speed = this.enemy.defaults.speed_min_diff;
+                    this.enemy.max_speed = this.enemy.defaults.speed_min_diff;
+                }
+                if (this.game.modifiers.indexOf('Enemy Size') != -1)
+                {
+                    this.enemy.min_size = this.enemy.defaults.size_min_diff;
+                    this.enemy.max_size = this.enemy.defaults.size_min_diff;
+                }
+                if (this.game.modifiers.indexOf('Number of Enemies') != -1)
+                {
+                    this.enemy.number = this.enemy.defaults.number_min_diff;
+                } 
+            }   
+            else
+            {
+                this.game.show_labels = true;
+                this.enemy.min_size = this.enemy.defaults.min_size;
+                this.enemy.max_size = this.enemy.defaults.max_size;
+                this.enemy.min_speed = this.enemy.defaults.min_speed;
+                this.enemy.max_speed = this.enemy.defaults.max_speed;
+                this.enemy.number = 2;
+            }  
+        },
+        SetupStartPositions()
+        {
+            this.arena.x = $('#'+this.arena.id).offset().left;
+            this.arena.y = $('#'+this.arena.id).offset().top;
+
+			this.ResetCharacterPosition();
+
+            this.safe_zone.x = this.arena.x;
+            this.safe_zone.y = this.arena.y-1;   
+            this.safe_zone.height = this.arena.height;   
+            this.safe_zone.width = Math.floor(this.arena.width/10);  
+
+            if (this.safe_zone.width < this.char.size)
+            {
+                this.safe_zone.width = this.char.size + 15;
+            }
+                    
+            this.end_zone.y = this.arena.y-1;   
+            this.end_zone.height = this.arena.height;   
+            this.end_zone.width = Math.floor(this.arena.width/20); 
+            this.end_zone.x = this.arena.x + this.arena.width - this.end_zone.width;
+
+            $('#'+this.safe_zone.id).fadeIn();
+            $('#'+this.end_zone.id).fadeIn();
+        },
+        UpdateGame() {
+            this.UpdateCharacter();
+            this.UpdateEnemies(); 
+        },
+        UpdateCharacter() {
+            if (this.char.going)
+            {
+                let diffX = Math.abs(this.char.x-this.char.destX);
+                let diffY = Math.abs(this.char.y-this.char.destY);
+
+                let distance = GetDistanceBetweenCoordinates(this.char.x,this.char.y,this.char.destX,this.char.destY);
+
+                //if we got where we are going, stop going
+                if (distance < (this.char.speed/this.game.slowmo_modifier))
+                {
+                    this.char.x = this.mi.x;
+                    this.char.y = this.mi.y;
+                    this.char.going = false;
+                    this.HideMoveIndicator();
+                }
+                else
+                {
+                    //still gotta go
+                    let speedX = ((this.char.speed/this.game.slowmo_modifier)/distance)*(this.char.destX - this.char.x);
+
+                    if (speedX!==0)
+                    {
+                        this.char.x = this.char.x+speedX;
+                    }
+
+
+                    let speedY = ((this.char.speed/this.game.slowmo_modifier)/distance)*(this.char.destY - this.char.y);
+
+                    if (speedY!==0)
+                    {
+                        this.char.y = this.char.y+speedY;
+                    }
+                }
+
+                this.CharacterEndZoneCollisionCheck();
+
+            }
+        },
+        CharacterEndZoneCollisionCheck() {
+            if (Collision($('#'+end_zone.id),$('#'+this.char.id),(this.char.size/2)))
+            {
+                this.Character_GotInEndzone();
+            }            
+        },
+        ResetCharacterPosition()
+        {
+            $('#'+this.char.id).hide();
+
+            if (isNaN(this.char.speed))
+            {
+                this.char.speed = 0;
+            }
+            this.char.going = false;
+            this.mi.active = false;
+            this.char.x = this.arena.x+5;
+            this.char.y = this.arena.y-(this.char.size/2)+Math.floor(this.arena.height/2);
+
+            setTimeout(() => $('#'+this.char.id).show('slow'), 100); 
+        },
+        UpdateEnemies() {
+            for (var i = 0; i < this.enemy.instances.length; i++) 
+            { 
+                this.enemy.instances[i].x+=this.enemy.instances[i].speedx/this.game.slowmo_modifier;
+                this.enemy.instances[i].y+=this.enemy.instances[i].speedy/this.game.slowmo_modifier;
+
+                this.Enemy_WallCollisionCheck(this.enemy.instances[i]);
+                this.Enemy_PlayerCollisionCheck(this.enemy.instances[i]); 
+            }                        
+        },
+        Enemy_WallCollisionCheck(enemy_object)
+        {
+            let boundary = $('#'+this.arena.id)[0].getBoundingClientRect();
+
+            let enemy = $('#'+enemy_object.id);
+
+            if (enemy[0].getBoundingClientRect().left < boundary.left + this.safe_zone.width + 2)
+            {
+                //stop X position
+                enemy_object.x = boundary.left + this.safe_zone.width + 2;
+
+                //bounce X speed
+                this.Enemy_BounceX(enemy_object);
+            }
+            if (enemy[0].getBoundingClientRect().right > boundary.right)
+            {
+                //stop X position
+                enemy_object.x = boundary.right - enemy_object.width;
+
+                //bounce X speed
+                this.Enemy_BounceX(enemy_object);
+            }
+            if (enemy[0].getBoundingClientRect().top < boundary.top)
+            {
+                //stop Y position
+                enemy_object.y = boundary.top;
+
+                //bounce Y speed
+                this.Enemy_BounceY(enemy_object);
+            }
+            if (enemy[0].getBoundingClientRect().bottom  > boundary.bottom)
+            {
+                //stop Y position
+                enemy_object.y = boundary.bottom - enemy_object.height;
+
+                //bounce Y speed
+                this.Enemy_BounceY(enemy_object);
+            }
+        },
+        Enemy_PlayerCollisionCheck(enemy_object)
+        {
+            if (Collision($('#'+enemy_object.id),$('#'+this.char.id),(this.char.size/2)))
+            {
+                this.Character_GotHit(enemy_object);
+            }
+        },
+        Enemy_BounceX(enemy_object)
+        {
+            enemy_object.speedx = -1 * enemy_object.speedx;
+        },
+        Enemy_BounceY(enemy_object)
+        {
+            enemy_object.speedy = -1 * enemy_object.speedy;
+        },
+        Enemy_GetSpeedTag(enemy_speed,enemy_size)
+        {
+            let r = '';
+            if (enemy_size > 45)
+            {
+                r = 'spd: '+Math.abs(enemy_speed);
+            }
+            
+            return r;
+        },
+        Enemy_GetSizeTag(enemy_speed,enemy_size)
+        {
+            let r = '';
+            if (enemy_size > 45)
+            {
+                r = 'size: '+enemy_size;
+            }
+            
+            return r;
+        },
+        ClickEvent(e) { 
+                if (e.which===1)
+                {
+                    this.char.mouseHold = true;     
+                    this.char.going = true;     
+                    this.Character_SetDestination(e);
+                }
+        },
+        MouseMoveEvent(e) { 
+            if (this.char.mouseHold)
+            {
+                this.Character_SetDestination(e);
+            }
+        },
+        MouseUpEvent(e) { 
+                if (e.which===1)
+                {
+                    this.char.mouseHold = false;     
+                }
+        },
+        SpaceDownEvent(e) { 
+                //this.game.slowmo_modifier = 5;
+        },
+        SpaceUpEvent(e) { 
+                //this.game.slowmo_modifier = 1;
+        },
+        Character_SetDestination(e) {
+                this.char.going = true;
+
+                this.char.destX = e.clientX-((this.char.size/2));
+                this.char.destY = e.clientY-((this.char.size/2));
+
+                let boundary = $('#'+this.arena.id)[0].getBoundingClientRect();
+
+                if (this.char.destX < boundary.left)
+                {
+                    this.char.destX = boundary.left;
+                }
+
+                if (this.char.destX > (boundary.right - (this.char.size+2)))
+                {
+                    this.char.destX = boundary.right - (this.char.size+2);
+                }
+
+                if (this.char.destY < boundary.top)
+                {
+                    this.char.destY = boundary.top;
+                }
+
+                if (this.char.destY > (boundary.bottom - (this.char.size+2)))
+                {
+                    this.char.destY = boundary.bottom - (this.char.size+2);               
+                }
+
+                this.ShowMoveIndicator();
+            
+        },
+        ShowMoveIndicator() {
+            this.mi.x=this.char.destX;
+            this.mi.y=this.char.destY;
+            this.mi.active = true;
+        },
+        HideMoveIndicator() {
+            this.mi.active = false;
+        },
+        Character_GotHit(enemy_object)
+        {
+            if (!this.char.currently_transitioning && !Collision($('#'+this.safe_zone.id),$('#'+this.char.id),(this.char.size/2)))
+            {
+                $('#'+enemy_object.id).addClass('pulse_gotHit');
+                this.char.currently_transitioning = true;
+                this.char.border_color = '#FF0000';
+                let oldArenaBorder = this.arena.border_color;
+                this.arena.border_color = '#FF0000';
+                this.game.slowmo_modifier = 10;
+                $('#'+this.game.id).addClass('pulse_gotHit');
+                $('#'+this.char.id).addClass('pulse_gotHit');
+
+                this.game.deaths++;
+                
+                setTimeout(() => this.Character_Die(oldArenaBorder), 2000);
+            }
+        },
+        Character_Die(oldArenaBorder) {
+            this.game.slowmo_modifier = 1;
+            this.char.currently_transitioning = false;
+            this.char.border_color = this.char.color;
+            this.arena.border_color = oldArenaBorder;
+            $('.pulse_gotHit').removeClass('pulse_gotHit');
+
+            this.ResetCharacterPosition();
+        },
+        Character_GotInEndzone()
+        {
+            if (!this.char.currently_transitioning)
+            {
+                this.char.currently_transitioning = true;
+                let oldArenaBorder = this.arena.border_color;
+                this.arena.border_color = this.char.color;
+                this.game.slowmo_modifier = 10;
+                $('#'+this.game.id).addClass('pulse_finishLevel');
+                $('#'+this.char.id).addClass('pulse_finishLevel');
+                
+                setTimeout(() => this.Endzone_Transition(oldArenaBorder), 2000);
+            }
+        },
+        Endzone_Transition(oldArenaBorder) {
+            this.game.level++;
+            this.game.slowmo_modifier = 1;
+            this.char.currently_transitioning = false;
+            this.arena.border_color = oldArenaBorder;
+            $('.pulse_finishLevel').removeClass('pulse_finishLevel');
+
+            this.IncrementModifiers();
+
+            this.SetupStartPositions(); 
+        },
+        ResetModifiersToZero() {
+            for (var i = 0; i < this.game.modifier_increments.length; i++) 
+            {
+                if (this.game.modifier_increments[i]>0)
+                {
+                    this.game.modifier_increments[i] = 0;
+                }
+            }
+        },
+        SandboxRandomize(difficulty) {
+
+            this.game.modifiers = ['Character Size','Enemy Speed','Enemy Size','Number of Enemies'];
+            this.game.modifier_increments = [-1,0,0,0,0];
+
+            if (difficulty===0)
+            {
+                this.game.level = 25;
+            }
+            else if (difficulty===1)
+            {
+                this.game.level = 38;
+            }
+            else if (difficulty===2)
+            {
+                this.game.level = 45;
+            }
+            else if (difficulty===3)
+            {
+                this.game.level = 55;
+            }
+
+            this.IncrementModifiers(true);
+            this.game.modifiers = [];
+            this.game.modifier_increments = [-1,-1,-1,-1,-1];
+            this.game.level = 1;
+
+            this.SetupStartPositions();
+        },
+        IncrementModifiers(bypass=false) {
+
+            if (this.game.mode===1)
+            {
+                for (var i = 0; i < this.game.modifiers.length; i++) 
+                {
+                    this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])] = this.game.level-1;
+                }
+
+                this.AssignModifiers(); 
+            }
+            else if (this.game.mode===2 || (bypass)) //random combo mode, or sandbox demonstration
+            {
+                this.ResetModifiersToZero();
+
+                for (var i = 0; i < this.game.level-1; i++) //for every level we completed
+                {
+                    //get a random modifier out of the modifiers active
+                    let rand_modifier = this.game.modifiers[randomIntFromInterval(0,(this.game.modifiers.length-1))];
+
+                    //increment the random modifier
+                    this.game.modifier_increments[this.game.potential_modifiers.indexOf(rand_modifier)]++;
+                }
+
+                this.AssignModifiers(); 
+            }
+           
+            this.RedrawEnemies();           
+        },
+        AssignModifiers()
+        {
+            //can just loop modifiers and increment based on their increment 
+            for (var i = 0; i < this.game.modifier_increments.length; i++) 
+            {
+                let increment_num = this.game.modifier_increments[i];
+
+                               
+                if (this.game.potential_modifiers[i] == 'Character Speed')
+                {
+                    if (increment_num > 0)
+                    { 
+                        this.char.speed = parseFloat((this.char.defaults.speed_min_diff * (Math.pow(this.char.defaults.speed_inc_diff,increment_num))).toFixed(2));
+                    }
+                    else if (increment_num === 0)
+                    {
+                        this.char.speed = this.char.defaults.speed_min_diff;
+                    }
+                    else if (increment_num < 0)
+                    {
+                        this.char.speed = this.char.defaults.speed;
+                    }
+                }
+                else if (this.game.potential_modifiers[i] == 'Character Size')
+                {
+                    if (increment_num > 0)
+                    {
+                        this.char.size = Math.round(this.char.defaults.size_min_diff * (Math.pow(this.char.defaults.size_inc_diff,increment_num)));
+                    }
+                    else if (increment_num === 0)
+                    {
+                        this.char.size = this.char.defaults.size_min_diff;
+                    }
+                    else if (increment_num < 0)
+                    {
+                        this.char.size = this.char.defaults.size;
+                    }
+                }
+                else if (this.game.potential_modifiers[i] == 'Enemy Speed')
+                {
+                    if (increment_num > 0)
+                    {
+                        this.enemy.min_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num))).toFixed(2));
+                        this.enemy.max_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num))).toFixed(2));
+                    }
+                    else if (increment_num === 0)
+                    {
+                        this.enemy.min_speed = this.enemy.defaults.speed_min_diff;
+                        this.enemy.max_speed = this.enemy.defaults.speed_min_diff;
+                    }
+                    else if (increment_num < 0)
+                    {
+                        this.enemy.min_speed = this.enemy.defaults.speed;
+                        this.enemy.max_speed = this.enemy.defaults.speed;
+                    }                    
+                }
+                else if (this.game.potential_modifiers[i] == 'Enemy Size')
+                {
+                    if (increment_num > 0)
+                    {
+                        this.enemy.min_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num)));
+                        this.enemy.max_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num)));
+                    }
+                    else if (increment_num === 0)
+                    {
+                        this.enemy.min_size = this.enemy.defaults.size_min_diff;
+                        this.enemy.max_size = this.enemy.defaults.size_min_diff;
+                    }
+                    else if (increment_num < 0)
+                    {
+                        this.enemy.min_size = this.enemy.defaults.size;
+                        this.enemy.max_size = this.enemy.defaults.size;
+                    }
+                }
+                else if (this.game.potential_modifiers[i] == 'Number of Enemies')
+                {
+                    if (increment_num > 0)
+                    {
+                        this.enemy.number = Math.ceil(this.enemy.defaults.number_min_diff * (Math.pow(this.enemy.defaults.number_inc_diff,increment_num)));
+                    }
+                    else if (increment_num === 0)
+                    {
+                        this.enemy.number = this.enemy.defaults.number_min_diff;
+                    }
+                    else if (increment_num < 0)
+                    {
+                        this.enemy.number = this.enemy.defaults.number;
+                    }
+
+                }
+                
+            }
+        },
+        GetModifiersHTML()
+        {
+            let output = '';
+
+            for (var i = 0; i < this.game.modifiers.length; i++) 
+            {
+                output+=this.game.modifiers[i]+'<sup>'+this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])]+'</sup>, ';
+            }
+
+            return output.slice(0, -2);
+        },
+        GetModifiersString()
+        {
+            let output = '';
+
+            for (var i = 0; i < this.game.modifiers.length; i++) 
+            {
+                output+=this.game.modifiers[i]+'['+this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])]+'], ';
+            }
+
+            return output.slice(0, -2);
+        },
+        SelectedGamemode(gamemode)
+        {
+            this.game.mode = gamemode;
+            
+            if (this.game.mode===0)
+            {
+                this.StartGame();
+            }
+        },
+        CreateEnemy()
+        {
+            let enemy_size = randomIntFromInterval(this.enemy.min_size,this.enemy.max_size);
+            let enemy_sizex = enemy_size;
+            let enemy_sizey = enemy_size;
+
+
+            let enemy_speedx = randomFloatFromInterval(this.enemy.min_speed,this.enemy.max_speed);
+            if (Math.floor(Math.random() * 2) == 0)
+            {
+                enemy_speedx*=-1;
+            }
+
+            let enemy_speedy = randomFloatFromInterval(-1*this.enemy.max_speed,this.enemy.max_speed);
+            if (Math.floor(Math.random() * 2) == 0)
+            {
+                enemy_speedy*=-1;
+            }
+
+
+            let enemy_startx = randomIntFromInterval(enemy_sizex+this.arena.x+this.safe_zone.width+2,this.arena.width+this.arena.x-enemy_sizex);
+            let enemy_starty = randomIntFromInterval(enemy_sizey+this.arena.y,this.arena.height+this.arena.y-enemy_sizey);
+
+            let enemy_id = $id('enemy');
+
+            this.enemy.instances.push({
+                id: enemy_id,
+                x: enemy_startx,
+                y: enemy_starty,
+                width: enemy_sizex,
+                height: enemy_sizey,
+                speedx: enemy_speedx,
+                speedy: enemy_speedy,
+                color: this.enemy.color
+            })
+
+
+
+
+                if (this.game.show_labels && enemy_sizex >= 40)
+                {
+                    var fontSize = (enemy_sizex/3).toFixed(1);
+                    var labels = $('<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+Math.abs(enemy_speedx)+'</div>'+'<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+enemy_sizex+'</div>');
+
+                    this.$nextTick(() => 
+				    { 
+                        $('#'+enemy_id).append(labels);
+				    });
+                }
+
+
+
+            
+
+        },
+        SetEnemies()
+        {
+            if (isNaN(this.enemy.number))
+            {
+                this.enemy.number = 0;
+            }
+
+            this.enemy.number = Math.floor(this.enemy.number);
+
+            if (this.enemy.instances.length < this.enemy.number)
+            {
+                for (var i = this.enemy.instances.length; i < this.enemy.number; i++) 
+                {
+                    this.CreateEnemy();
+                }
+            }
+            else if (this.enemy.instances.length > this.enemy.number)
+            {
+                for (var i = this.enemy.instances.length; i > this.enemy.number; i--) 
+                {
+                    this.enemy.instances.pop();
+                }
+            }
+        },
+        RedrawEnemies()
+        {
+            $('.enemy_label').remove();
+            this.enemy.instances = [];
+            this.SetEnemies();
+        }
+
+    }" 
+    x-cloak
+    id="game">
+
+    <div x-show="game.mode!==null && (game.mode===0 || (game.modifiers.length>0 && game.game_start))">
+    <div style="display:flex; min-height: 100vh;">
+
+        <div style="margin-right:8px;">
+        <div :style="{width: `${arena.width}px`}" style="margin-bottom:5px; padding-left:5px; padding-right:5px;">
+            <div style="margin-top:10px; font-size:24px; color:#c4b5ff; text-align:center; margin-left:auto; margin-right:auto; font-weight: 900;">
+                Alpine.js Dodge Minigame
+            </div>
+            <div style="margin-top:2px; margin-bottom:1px; font-size:12px; color:rgb(211, 211, 211); text-align:center; margin-left:auto; margin-right:auto;">
+                by <a style="color:rgb(211, 211, 211);" target="_blank" href="https://www.troyclemmer.com/">Troy Clemmer</a>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+                <div style="overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;">
+                    <div style="color:rgb(236, 236, 236);"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Mode:</span><span x-text="game.mode!==null?game.modes[game.mode].name:''" style="font-size:16px; font-weight:normal;"></span></div>
+                    <div x-show="game.mode!==0" style="margin-top:2px; color:#dcbcff;"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Modifiers:</span><span x-html="GetModifiersHTML()" :title="GetModifiersString()" style="font-size:16px; font-weight:normal;"></span></div>
+                    <div x-show="game.mode===0" style="margin-left: auto; margin-right: auto; display:flex; margin-top:2px;"><button @click="SandboxRandomize(0)" style="margin-right:4px;">Randomize Easy</button><button @click="SandboxRandomize(1)" style="margin-right:4px;">Randomize Medium</button><button @click="SandboxRandomize(2)" style="margin-right:4px;">Randomize Hard</button><button @click="SandboxRandomize(3)">Randomize Impossible</button></div>
+                </div>
+                <div style="align-self: end; text-align:right;">
+                    <div style="display:flex; flex-direction:column;">
+                        <div x-show="game.mode!==0" style="margin-bottom:2px;"><span style="color:white; font-size:18px;" x-text="'Level ' + game.level"></span></div>
+                        <div><span style="color:#ffaaaa;" x-text="game.deaths+' deaths'"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div 
+        :id="game.id"
+        @contextmenu.prevent
+        :style="{height: `${arena.height}px`, width: `${arena.width}px`, borderColor: `${arena.border_color}`, borderWidth: `${arena.border_width}px`}" 
+        style="border-style: solid; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; transition-property: border-color;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 250ms;"
+        >
+        <div 
+        :id="arena.id" 
+        @mousedown="ClickEvent"
+        @mousemove="MouseMoveEvent"
+        @mouseup="MouseUpEvent" 
+        @keydown.space.window="SpaceDownEvent"
+        @keyup.space.window="SpaceUpEvent"
+        :style="{background: `${arena.color}`}"
+        style="height:100%; width:100%;"
+        >
+
+        <div :id="safe_zone.id"
+        :style="{height: `${safe_zone.height}px`, width: `${safe_zone.width}px`, left: `${safe_zone.x}px`, top: `${safe_zone.y}px`, background: `${safe_zone.color}`, borderRightColor: `${safe_zone.border_color}`}"
+        style="display:none; pointer-events: none; z-index:100; border-right: solid 2px; position:absolute;"
+        ></div>
+
+        <div :id="end_zone.id"
+        :style="{height: `${end_zone.height}px`, width: `${end_zone.width}px`, left: `${end_zone.x}px`, top: `${end_zone.y}px`, background: `${end_zone.color}`, borderLeftColor: `${end_zone.border_color}`}"
+        style="display:none; pointer-events: none; z-index:100; border-left: solid 2px; position:absolute;"
+        ></div>
+
+        
+            <div :id="char.id"
+                :style="{height: `${char.size}px`, width: `${char.size}px`, left: `${char.x}px`, top: `${char.y}px`, background: `${char.color}`, borderColor: `${char.border_color}`}" 
+                style="display:none; pointer-events: none; z-index:20; border-top-left-radius: 50%; border-top-right-radius: 50%; border-bottom-left-radius: 50%; border-bottom-right-radius: 50%; position:absolute; border: 1px solid;">
+            </div>
+            <div :id="mi.id" 
+                x-show="mi.active"
+                :style="{height: `${char.size}px`, width: `${char.size}px`, left: `${mi.x}px`, top: `${mi.y}px`, background: `${mi.color}`, borderColor: `${mi.border_color}`}"
+                style="position: absolute; pointer-events: none; border-top-left-radius: 50%; border-top-right-radius: 50%; border-bottom-left-radius: 50%; border: 1px dashed; border-bottom-right-radius: 50%;">
+            </div>
+
+            <template x-for="loop_enemy in enemy.instances">
+                <div :id="loop_enemy.id" class="enemy"
+                :style="{left: `${loop_enemy.x}px`, top: `${loop_enemy.y}px`, height: `${loop_enemy.height}px`, width: `${loop_enemy.width}px`, background: `${loop_enemy.color}`}" 
+                style="display:flex; flex-direction: column; justify-content: space-between; pointer-events: none; z-index:50; position:absolute;">
+            </div>
+            </template>
+
+        
+        </div>
+    </div>
+
+    </div>
+
+   
+    <div style="width: 100%; margin-left:auto; margin-right:auto; margin-top:60px;">
+        <div style="text-align:center; margin-bottom:8px; margin-right:8px; color:rgb(231, 231, 231); font-weight:700; font-size:18px;">Modifiers</div>
+        <div x-show="game.mode===2 && game.modifiers.length>0 && game.game_start"><button @click="IncrementModifiers()" style="margin-left: auto; margin-right: auto; display:flex; margin-bottom:8px;">Randomize</button></div>
+    <div 
+    id="toolbox"
+    style="margin-left:auto; margin-right:auto; max-width:275px; max-height:75vh; height: min-content; overflow-y: auto; padding-top:12px; padding-bottom:24px; background:#e5e5e5; border:solid 4px; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+
+
+        <!-- arena start -->
+        <div x-show="game.mode===0" style="padding-left: 24px; padding-right: 24px;">
+
+            <div style="text-align:center; margin-bottom:10px; font-weight:700;">Arena</div>
+
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Arena Width</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="arena.width" @input="SetupStartPositions()" :id="$id('modifier-input')">
+                <button @click="arena.width=arena.defaults.width;SetupStartPositions()"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Arena Height</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="arena.height" @input="SetupStartPositions()" :id="$id('modifier-input')">
+                <button @click="arena.height=arena.defaults.height;SetupStartPositions()"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Arena Color</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%;" type="color" @input="arena.border_color=pSBC(-.96,arena.color)" x-model="arena.color" :id="$id('modifier-input')">
+                <button @click="arena.color=arena.defaults.color;arena.border_color=arena.defaults.border_color"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+        
+        <hr style="margin: 18px -24px 10px;">
+
+        </div>
+        <!-- arena end -->
+
+        <!-- character start -->
+        <div style="padding-left: 24px; padding-right: 24px;">
+
+            <div style="text-align:center; margin-bottom:10px; font-weight:700;">Character</div>
+
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label :style="game.modifier_increments[0]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Character Speed<sup x-show="game.mode!==0 && game.modifier_increments[0]>=0" x-text="game.modifier_increments[0]"></sup></label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-show="game.mode!==0" x-html="game.modifier_increments[0]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <input :disabled="game.mode!==0" style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" step="0.5" x-model.number="char.speed" :id="$id('modifier-input')">
+                <button x-show="game.mode===0" @click="char.speed=char.defaults.speed"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label :style="game.modifier_increments[1]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Character Size<sup x-show="game.mode!==0 && game.modifier_increments[1]>=0" x-text="game.modifier_increments[1]"></sup></label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-show="game.mode!==0" x-html="game.modifier_increments[1]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <input :disabled="game.mode!==0" style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="char.size" :id="$id('modifier-input')">
+                <button x-show="game.mode===0" @click="char.size=char.defaults.size"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Character X</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="char.x" :id="$id('modifier-input')">
+                <button @click="ResetCharacterPosition()"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Character Y</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="char.y" :id="$id('modifier-input')">
+                <button @click="ResetCharacterPosition()"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Character Color</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%;" type="color" x-model="char.color" @input="char.border_color=char.color" :id="$id('modifier-input')">
+                <button @click="char.color=char.defaults.color;char.border_color=char.defaults.border_color"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        </div>
+        <!-- character end -->
+        <hr style="margin-top:18px; margin-bottom:10px;">
+        <!-- enemies start -->
+        <div style="padding-left: 24px; padding-right: 24px;">
+
+            <div style="text-align:center; margin-bottom:10px; font-weight:700;">Enemies</div>
+
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Enemy Min Speed</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.min_speed" :id="$id('modifier-input')">
+                <button @click="enemy.min_speed=enemy.defaults.min_speed"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Enemy Max Speed</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.max_speed" :id="$id('modifier-input')">
+                <button @click="enemy.max_speed=enemy.defaults.max_speed"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode!==0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label :style="game.modifier_increments[2]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Enemy Speed<sup x-show="game.mode!==0 && game.modifier_increments[2]>=0" x-text="game.modifier_increments[2]"></sup></label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-html="game.modifier_increments[2]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <input disabled style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" x-model.number="enemy.max_speed" :id="$id('modifier-input')">
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Enemy Min Size</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.min_size" :id="$id('modifier-input')">
+                <button @click="enemy.min_size=enemy.defaults.min_size"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Enemy Max Size</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.max_size" :id="$id('modifier-input')">
+                <button @click="enemy.max_size=enemy.defaults.max_size"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode!==0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label :style="game.modifier_increments[3]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Enemy Size<sup x-show="game.mode!==0 && game.modifier_increments[3]>=0" x-text="game.modifier_increments[3]"></sup></label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-html="game.modifier_increments[3]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <input disabled style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="enemy.max_size" :id="$id('modifier-input')">
+            </div>
+        </div>
+
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label :style="game.modifier_increments[4]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Number of Enemies<sup x-show="game.mode!==0 && game.modifier_increments[4]>=0" x-text="game.modifier_increments[4]"></sup></label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-show="game.mode!==0" x-html="game.modifier_increments[4]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <input id="num_enemies" :disabled="game.mode!==0" style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null"  x-model.number="enemy.number">
+                <button x-show="game.mode===0" @click="enemy.number=enemy.defaults.number"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('text-input')">Enemy Color</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%;" type="color" x-model="enemy.color" :id="$id('modifier-input')">
+                <button @click="enemy.color=enemy.defaults.color"><i class="far fa-redo"></i></button>
+            </div>
+        </div>
+
+
+        </div>
+        <!-- enemies end -->
+        <!-- safe_zone start -->
+        <div x-show="game.mode===0" style="padding-left: 24px; padding-right: 24px;">
+
+            <hr style="margin: 18px -24px 10px;">
+
+            <div style="text-align:center; margin-bottom:10px; font-weight:700;">Safe Zone</div>
+            
+
+            <div style="margin-bottom:8px;" x-id="['modifier-input']">
+                <label style="font-size:14px;" :for="$id('text-input')">Safe Zone Width</label>
+             
+                <div style="display:flex; margin-top:2px;">
+                    <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="safe_zone.width" :id="$id('modifier-input')">
+                    <button @click="SetupStartPositions()"><i class="far fa-redo"></i></button>
+                </div>
+            </div>
+
+
+            <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+                <label style="font-size:14px;" :for="$id('text-input')">Safe Zone Color</label>
+             
+                <div style="display:flex; margin-top:2px;">
+                    <input style="flex-grow: 1; width:100%;" type="color" @input="safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'" x-model="safe_zone.border_color" :id="$id('modifier-input')">
+                    <button @click="safe_zone.border_color='#4caf50';safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'"><i class="far fa-redo"></i></button>
+                </div>
+            </div>
+
+        
+        <hr style="margin: 18px -24px 10px;">
+
+        </div>
+        <!-- safe_zone end -->
+        <!-- end_zone start -->
+        <div x-show="game.mode===0" style="padding-left: 24px; padding-right: 24px;">
+
+            <div style="text-align:center; margin-bottom:10px; font-weight:700;">End Zone</div>
+
+
+            <div style="margin-bottom:8px;" x-id="['modifier-input']">
+                <label style="font-size:14px;" :for="$id('text-input')">End Zone Width</label>
+             
+                <div style="display:flex; margin-top:2px;">
+                    <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" @input="end_zone.x = arena.x + arena.width - end_zone.width" x-model.number="end_zone.width" :id="$id('modifier-input')">
+                    <button @click="SetupStartPositions()"><i class="far fa-redo"></i></button>
+                </div>
+            </div>
+
+
+
+            <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+                <label style="font-size:14px;" :for="$id('text-input')">End Zone Color</label>
+             
+                <div style="display:flex; margin-top:2px;">
+                    <input style="flex-grow: 1; width:100%;" type="color" @input="end_zone.color = pSBC(0.35,end_zone.border_color)+'66'" x-model="end_zone.border_color" :id="$id('modifier-input')">
+                    <button @click="end_zone.border_color='#7900ff';end_zone.color = pSBC(0.35,end_zone.border_color)+'66'"><i class="far fa-redo"></i></button>
+                </div>
+            </div>
+
+
+        
+
+        </div>
+        <!-- end_zone end -->
+
+
+
+    </div></div>
+</div>
+</div>
+
+<div x-show="game.mode===null" id="menu">
+
+    <div style="margin-top:24px; font-size:39px; color:#c4b5ff; text-align:center; margin-left:auto; margin-right:auto; font-weight: 900;">
+        Alpine.js Dodge Minigame
+    </div>
+    <div style="margin-top:4px; margin-bottom:1px; font-size:18px; color:rgb(211, 211, 211); text-align:center; margin-left:auto; margin-right:auto;">
+        by <a style="color:rgb(211, 211, 211);" target="_blank" href="https://www.troyclemmer.com/">Troy Clemmer</a>
+    </div>
+
+    <div style="width:200px; display:flex; flex-direction: column; align-items: center; margin-top:30px; margin-left:auto; margin-right:auto; text-align:center;">
+        <div style="color:white; font-size:24px; margin-bottom:12px;">Select a mode:</div>
+
+        <template x-for="gamemode in game.modes" :key="gamemode.id">
+            <button style="cursor:pointer; border:4px solid; font-size:16px; padding: 10px 5px; width:100%; margin-top:8px;" @click="SelectedGamemode(gamemode.id)" x-text="gamemode.name"></button>
+        </template>
+        
+    </div>
+    
+
+</div>
+
+<div x-show="game.mode!==null && (!game.game_start)">
+
+    <div style="margin-top:24px; font-size:39px; color:#c4b5ff; text-align:center; margin-left:auto; margin-right:auto; font-weight: 900;">
+        Alpine.js Dodge Minigame
+    </div>
+    <div style="margin-top:4px; margin-bottom:1px; font-size:18px; color:rgb(211, 211, 211); text-align:center; margin-left:auto; margin-right:auto;">
+        by <a style="color:rgb(211, 211, 211);" target="_blank" href="https://www.troyclemmer.com/">Troy Clemmer</a>
+    </div>
+
+
+    <div style="width:200px; display:flex; flex-direction: column; align-items: center; margin-top:30px; margin-left:auto; margin-right:auto; text-align:center;">
+        <div style="color:rgb(236, 236, 236); white-space:nowrap;"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Mode:</span><span x-text="game.mode!==null?game.modes[game.mode].name:''" style="font-size:16px; font-weight:normal;"></span></div>
+        <div style="color:white; font-size:24px; margin-top:20px; margin-bottom:12px;">Choose Modifiers:</div>
+
+        <template x-for="(modifiers,index) in game.potential_modifiers">
+           <!-- 
+            <button style="cursor:pointer; border:4px solid; background:#dcbcff; font-size:16px; padding: 10px 5px; width:100%; margin-top:8px;" @click="game.modifier_increments[index]++; game.modifiers.push(modifiers); StartGame()" x-text="modifiers"></button>
+            -->
+            <label :for="'chk_'+modifiers.replace(' ','')" :style="game.modifiers.indexOf(modifiers) != -1 ? {background: '#dcbcff'} : {background: '#a1a1a1'}" style="cursor:pointer; border:4px solid; font-size:16px; padding: 10px 5px; width:100%; margin-top:8px;"><input type="checkbox" style="display:none;" :id="'chk_'+modifiers.replace(' ','')" :name="'chk_'+modifiers.replace(' ','')" :value="modifiers" x-model="game.modifiers"><span x-text="modifiers"></span></label>
+        </template>
+
+        <button @click="game.modifiers.length>0 ? StartGame() : alert('pick some modifiers')" style="margin-top:32px; cursor:pointer; border:2px solid; font-size:16px; padding: 8px 4px;">Start Game</button>
+
+        <button @click="game.mode=null;game.modifiers=[]" style="margin-top:20px;">Go back</button>
+    </div>
+</div>
+
+
+    </div>
+
+
+        
+        <script type="text/javascript">
+
+
+            
+
+        function GetDistanceBetweenCoordinates(xi,yi,xf,yf)
+        {
+           return Math.sqrt(Math.pow((xf-xi),2) + Math.pow((yf-yi),2));
+        }
+
+
+
+        function randomIntFromInterval(min, max) { // min and max included 
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+function randomFloatFromInterval(min, max) { // min and max included 
+  return parseFloat((Math.random() * (max - min) + min).toFixed(1));
+}
+
+          /*
+          //rectangle and rectangle collision
+        function Collision($div1, $div2) 
+        {
+            var leeway = 3;
+            
+            var x1 = $div1.offset().left + leeway;
+            var y1 = $div1.offset().top + leeway;
+            var h1 = $div1.outerHeight(true) - leeway*2;
+            var w1 = $div1.outerWidth(true) - leeway*2;
+            var b1 = y1 + h1;
+            var r1 = x1 + w1;
+            var x2 = $div2.offset().left;
+            var y2 = $div2.offset().top;
+            var h2 = $div2.outerHeight(true);
+            var w2 = $div2.outerWidth(true);
+            var b2 = y2 + h2;
+            var r2 = x2 + w2;
+
+      if (b1 < y2 || y1 > b2 || r1 < x2 || x1 > r2) return false;
+      return true;
+    }
+    */
+
+
+
+//rectangle and circle collision
+function Collision(rect,circle,char_radius){
+    var distX = Math.abs(circle.offset().left+char_radius - rect.offset().left-rect.outerWidth(true)/2);
+    var distY = Math.abs(circle.offset().top+char_radius - rect.offset().top-rect.outerHeight(true)/2);
+
+    if (distX > (rect.outerWidth(true)/2 + char_radius)) { return false; }
+    if (distY > (rect.outerHeight(true)/2 + char_radius)) { return false; }
+
+    if (distX <= (rect.outerWidth(true)/2)) { return true; } 
+    if (distY <= (rect.outerHeight(true)/2)) { return true; }
+
+    var dx=distX-rect.outerWidth(true)/2;
+    var dy=distY-rect.outerHeight(true)/2;
+    return (dx*dx+dy*dy<=(char_radius*char_radius));
+}
+
+
+//p = percent to lighten, use negative value to darken
+//c0 = the color to lighten
+// c1 = to color
+//l = linear blending boolean
+const pSBC=(p,c0,c1,l)=>{
+    let r,g,b,P,f,t,h,i=parseInt,m=Math.round,a=typeof(c1)=="string";
+    if(typeof(p)!="number"||p<-1||p>1||typeof(c0)!="string"||(c0[0]!='r'&&c0[0]!='#')||(c1&&!a))return null;
+    if(!this.pSBCr)this.pSBCr=(d)=>{
+        let n=d.length,x={};
+        if(n>9){
+            [r,g,b,a]=d=d.split(","),n=d.length;
+            if(n<3||n>4)return null;
+            x.r=i(r[3]=="a"?r.slice(5):r.slice(4)),x.g=i(g),x.b=i(b),x.a=a?parseFloat(a):-1
+        }else{
+            if(n==8||n==6||n<4)return null;
+            if(n<6)d="#"+d[1]+d[1]+d[2]+d[2]+d[3]+d[3]+(n>4?d[4]+d[4]:"");
+            d=i(d.slice(1),16);
+            if(n==9||n==5)x.r=d>>24&255,x.g=d>>16&255,x.b=d>>8&255,x.a=m((d&255)/0.255)/1000;
+            else x.r=d>>16,x.g=d>>8&255,x.b=d&255,x.a=-1
+        }return x};
+    h=c0.length>9,h=a?c1.length>9?true:c1=="c"?!h:false:h,f=this.pSBCr(c0),P=p<0,t=c1&&c1!="c"?this.pSBCr(c1):P?{r:0,g:0,b:0,a:-1}:{r:255,g:255,b:255,a:-1},p=P?p*-1:p,P=1-p;
+    if(!f||!t)return null;
+    if(l)r=m(P*f.r+p*t.r),g=m(P*f.g+p*t.g),b=m(P*f.b+p*t.b);
+    else r=m((P*f.r**2+p*t.r**2)**0.5),g=m((P*f.g**2+p*t.g**2)**0.5),b=m((P*f.b**2+p*t.b**2)**0.5);
+    a=f.a,t=t.a,f=a>=0||t>=0,a=f?a<0?t:t<0?a:a*P+t*p:0;
+    if(h)return"rgb"+(f?"a(":"(")+r+","+g+","+b+(f?","+m(a*1000)/1000:"")+")";
+    else return"#"+(4294967296+r*16777216+g*65536+b*256+(f?m(a*255):0)).toString(16).slice(1,f?undefined:-2)
+}
+
+
+    </script>
+    <script src="https://unpkg.com/@alpine-collective/toolkit@1.0.2/dist/cdn.min.js" defer></script>
+	<script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+</body>
+</html>
