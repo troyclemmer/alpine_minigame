@@ -5,3 +5,6 @@ Dodge minigame made in Alpine.js, just for fun<br>
 @author: Troy Clemmer <br>
 @startdate: 2023-01-31 <br>
 @technologies: alpine.js, jquery, css, html, fontawesome icons <br>
+@link: https://troyclemmer.dev/dodge/
+<br>
+### play at: https://troyclemmer.dev/dodge/
