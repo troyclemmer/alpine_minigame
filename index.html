@@ -73,7 +73,6 @@ background-color: #5c5c5c;">
 
 </style>
 
-<script defer src="fontawesome-all.min.js"></script>
 </head>
 <body style="margin-left:50px;">
 
@@ -993,7 +992,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="arena.width" @input="SetupStartPositions()" :id="$id('modifier-input')">
-                <button @click="arena.width=arena.defaults.width;SetupStartPositions()"><i class="far fa-redo"></i></button>
+                <button @click="arena.width=arena.defaults.width;SetupStartPositions()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1002,7 +1001,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="arena.height" @input="SetupStartPositions()" :id="$id('modifier-input')">
-                <button @click="arena.height=arena.defaults.height;SetupStartPositions()"><i class="far fa-redo"></i></button>
+                <button @click="arena.height=arena.defaults.height;SetupStartPositions()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1012,7 +1011,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%;" type="color" @input="arena.border_color=pSBC(-.96,arena.color)" x-model="arena.color" :id="$id('modifier-input')">
-                <button @click="arena.color=arena.defaults.color;arena.border_color=arena.defaults.border_color"><i class="far fa-redo"></i></button>
+                <button @click="arena.color=arena.defaults.color;arena.border_color=arena.defaults.border_color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
         
@@ -1030,9 +1029,9 @@ background-color: #5c5c5c;">
             <label :style="game.modifier_increments[0]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Character Speed<sup x-show="game.mode!==0 && game.modifier_increments[0]>=0" x-text="game.modifier_increments[0]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
-                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-show="game.mode!==0" x-html="game.modifier_increments[0]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[0]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
                 <input :disabled="game.mode!==0" style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" step="0.5" x-model.number="char.speed" :id="$id('modifier-input')">
-                <button x-show="game.mode===0" @click="char.speed=char.defaults.speed"><i class="far fa-redo"></i></button>
+                <button x-show="game.mode===0" @click="char.speed=char.defaults.speed"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1040,9 +1039,9 @@ background-color: #5c5c5c;">
             <label :style="game.modifier_increments[1]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Character Size<sup x-show="game.mode!==0 && game.modifier_increments[1]>=0" x-text="game.modifier_increments[1]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
-                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-show="game.mode!==0" x-html="game.modifier_increments[1]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[1]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
                 <input :disabled="game.mode!==0" style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="char.size" :id="$id('modifier-input')">
-                <button x-show="game.mode===0" @click="char.size=char.defaults.size"><i class="far fa-redo"></i></button>
+                <button x-show="game.mode===0" @click="char.size=char.defaults.size"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1051,7 +1050,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="char.x" :id="$id('modifier-input')">
-                <button @click="ResetCharacterPosition()"><i class="far fa-redo"></i></button>
+                <button @click="ResetCharacterPosition()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1060,7 +1059,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="char.y" :id="$id('modifier-input')">
-                <button @click="ResetCharacterPosition()"><i class="far fa-redo"></i></button>
+                <button @click="ResetCharacterPosition()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1069,7 +1068,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%;" type="color" x-model="char.color" @input="char.border_color=char.color" :id="$id('modifier-input')">
-                <button @click="char.color=char.defaults.color;char.border_color=char.defaults.border_color"><i class="far fa-redo"></i></button>
+                <button @click="char.color=char.defaults.color;char.border_color=char.defaults.border_color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1087,7 +1086,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.min_speed" :id="$id('modifier-input')">
-                <button @click="enemy.min_speed=enemy.defaults.min_speed"><i class="far fa-redo"></i></button>
+                <button @click="enemy.min_speed=enemy.defaults.min_speed"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1096,7 +1095,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.max_speed" :id="$id('modifier-input')">
-                <button @click="enemy.max_speed=enemy.defaults.max_speed"><i class="far fa-redo"></i></button>
+                <button @click="enemy.max_speed=enemy.defaults.max_speed"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1104,7 +1103,7 @@ background-color: #5c5c5c;">
             <label :style="game.modifier_increments[2]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Enemy Speed<sup x-show="game.mode!==0 && game.modifier_increments[2]>=0" x-text="game.modifier_increments[2]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
-                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-html="game.modifier_increments[2]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-html="game.modifier_increments[2]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
                 <input disabled style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" x-model.number="enemy.max_speed" :id="$id('modifier-input')">
             </div>
         </div>
@@ -1114,7 +1113,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.min_size" :id="$id('modifier-input')">
-                <button @click="enemy.min_size=enemy.defaults.min_size"><i class="far fa-redo"></i></button>
+                <button @click="enemy.min_size=enemy.defaults.min_size"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1123,7 +1122,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.max_size" :id="$id('modifier-input')">
-                <button @click="enemy.max_size=enemy.defaults.max_size"><i class="far fa-redo"></i></button>
+                <button @click="enemy.max_size=enemy.defaults.max_size"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1131,7 +1130,7 @@ background-color: #5c5c5c;">
             <label :style="game.modifier_increments[3]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Enemy Size<sup x-show="game.mode!==0 && game.modifier_increments[3]>=0" x-text="game.modifier_increments[3]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
-                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-html="game.modifier_increments[3]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-html="game.modifier_increments[3]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
                 <input disabled style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="enemy.max_size" :id="$id('modifier-input')">
             </div>
         </div>
@@ -1140,9 +1139,9 @@ background-color: #5c5c5c;">
             <label :style="game.modifier_increments[4]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Number of Enemies<sup x-show="game.mode!==0 && game.modifier_increments[4]>=0" x-text="game.modifier_increments[4]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
-                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px;" x-show="game.mode!==0" x-html="game.modifier_increments[4]<0 ? '<i class=\'fas fa-lock\' style=\'color: rgb(64 64 64);\'></i>' : '<i class=\'fas fa-exchange\' style=\'color: #a95efb;\'></i>'"></div>
+                <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[4]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
                 <input id="num_enemies" :disabled="game.mode!==0" style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null"  x-model.number="enemy.number">
-                <button x-show="game.mode===0" @click="enemy.number=0"><i class="far fa-redo"></i></button>
+                <button x-show="game.mode===0" @click="enemy.number=0"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1151,7 +1150,7 @@ background-color: #5c5c5c;">
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%;" type="color" x-model="enemy.color" :id="$id('modifier-input')">
-                <button @click="enemy.color=enemy.defaults.color"><i class="far fa-redo"></i></button>
+                <button @click="enemy.color=enemy.defaults.color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1171,7 +1170,7 @@ background-color: #5c5c5c;">
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="safe_zone.width" :id="$id('modifier-input')">
-                    <button @click="SetupStartPositions()"><i class="far fa-redo"></i></button>
+                    <button @click="SetupStartPositions()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
                 </div>
             </div>
 
@@ -1181,7 +1180,7 @@ background-color: #5c5c5c;">
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%;" type="color" @input="safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'" x-model="safe_zone.border_color" :id="$id('modifier-input')">
-                    <button @click="safe_zone.border_color='#4caf50';safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'"><i class="far fa-redo"></i></button>
+                    <button @click="safe_zone.border_color='#4caf50';safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'"><span style="font-size:14px; font-weight:bold;">↻</span></button>
                 </div>
             </div>
 
@@ -1201,7 +1200,7 @@ background-color: #5c5c5c;">
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" @input="end_zone.x = arena.x + arena.width - end_zone.width" x-model.number="end_zone.width" :id="$id('modifier-input')">
-                    <button @click="SetupStartPositions()"><i class="far fa-redo"></i></button>
+                    <button @click="SetupStartPositions()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
                 </div>
             </div>
 
@@ -1212,7 +1211,7 @@ background-color: #5c5c5c;">
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%;" type="color" @input="end_zone.color = pSBC(0.35,end_zone.border_color)+'66'" x-model="end_zone.border_color" :id="$id('modifier-input')">
-                    <button @click="end_zone.border_color='#7900ff';end_zone.color = pSBC(0.35,end_zone.border_color)+'66'"><i class="far fa-redo"></i></button>
+                    <button @click="end_zone.border_color='#7900ff';end_zone.color = pSBC(0.35,end_zone.border_color)+'66'"><span style="font-size:14px; font-weight:bold;">↻</span></button>
                 </div>
             </div>
 
