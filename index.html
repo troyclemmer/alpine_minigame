@@ -86,7 +86,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.2.8',
+            version: '1.2.9',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -227,6 +227,7 @@ background-color: #5c5c5c;">
             //this.game.mode=null;
             //this.game.modifiers=[];
             //this.game.game_start=false;
+            //clear timer??
             location.reload();
         },
         StartGame() {
@@ -713,9 +714,9 @@ background-color: #5c5c5c;">
                     if (increment_num > 0)
                     { 
                         this.char.speed = parseFloat((this.char.defaults.speed_min_diff - (this.char.defaults.speed_inc_diff*net_increment_amount)).toFixed(2));
-                        if (this.char.speed<=0)
+                        if (this.char.speed<.5)
                         {
-                            this.char.speed=0.1;
+                            this.char.speed=0.4;
                         }
                     }
                     else if (increment_num === 0)
@@ -1035,7 +1036,7 @@ background-color: #5c5c5c;">
    
     <div style="width: 100%; margin-left:auto; margin-right:auto; margin-top:60px;">
         <div style="text-align:center; margin-bottom:8px; margin-right:8px; color:rgb(231, 231, 231); font-weight:700; font-size:90%; font-size:18px;">Modifiers</div>
-        <div x-show="game.mode===2 && game.modifiers.length>0 && game.game_start"><button @click="IncrementModifiers()" style="margin-left: auto; margin-right: auto; display:flex; margin-bottom:8px;">Randomize</button></div>
+        <div x-show="game.mode===2 && game.modifiers.length>0 && game.game_start"><button @click="IncrementModifiers();SetupStartPositions()" style="margin-left: auto; margin-right: auto; display:flex; margin-bottom:8px;">Randomize</button></div>
     <div 
     id="toolbox"
     style="margin-left:auto; margin-right:auto; max-width:275px; max-height:75vh; height: min-content; overflow-y: auto; padding-top:12px; padding-bottom:24px; background:#e5e5e5; border:solid 4px; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
