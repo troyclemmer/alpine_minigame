@@ -96,17 +96,17 @@ background-color: #5c5c5c;">
             { 
                 id: 0, 
                 name: 'Sandbox', 
-                desc: 'Just for fun, to play with all the attributes'
+                desc: 'Just for fun, to play with all the attributes.'
             },
             { 
                 id: 1, 
                 name: 'Linear Modifier Mode', 
-                desc: 'Adds one increment to each modifier per level but modifiers increment at 25% less per additional modifier past 1'
+                desc: 'Adds one increment to each modifier per level but modifiers increment at 25% less per additional modifier past 1.'
             },
             { 
                 id: 2, 
                 name: 'Random Combo Mode', 
-                desc: 'Randomly distributes total increments to active modifiers.  +1 modifier increment per level'
+                desc: 'Randomly distributes total increments to active modifiers. +1 modifier increment per level. Starting level increases for every modifier.'
             }
             //{ id: 3, name: 'Timed' }
             ],            
@@ -119,7 +119,8 @@ background-color: #5c5c5c;">
             show_labels: false,
             game_start: false,
             balance: {
-                linear_weight_decrease: 0.25 //the weight amount every modifier increment for each new modifier, 0 = no change for linear, 0.25 = 25% easier for linear, 1 = for every additional modifier, increment amount divided by another full number
+                linear_weight_decrease: 0.25, //for linear game mode: the weight amount every modifier increment for each new modifier, 0 = no change for linear, 0.25 = 25% easier for linear, 1 = for every additional modifier, increment amount divided by another full number
+                random_mode_weight: 1.8 //for random combo game mode: for every modifier, number of modifiers^random_mode_weight starting level
             }
         },
         arena: { 
@@ -259,6 +260,11 @@ background-color: #5c5c5c;">
 
             if (this.game.mode!==0)
             {
+                if (this.game.mode===2)
+                {
+                    this.game.level = Math.round(Math.pow(this.game.modifiers.length,this.game.balance.random_mode_weight));
+                }
+
                 for (var i = 0; i < this.game.modifiers.length; i++) 
                 {
                     this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])] = 0;
