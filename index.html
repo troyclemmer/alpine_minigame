@@ -670,7 +670,6 @@ background-color: #5c5c5c;">
             //set modifier weight for linear mode
             if (this.game.mode===1)
             {
-                //modifier_weight = this.game.modifiers.length===1 ? 1 : this.game.modifiers.length * this.game.balance.linear_weight_decrease; //every modifier will be less potent based on how many modifiers there are in linear mode
                 modifier_weight = this.game.modifiers.length===1 ? 1 : 1 + ((this.game.modifiers.length - 1) * this.game.balance.linear_weight_decrease);
             }
 
@@ -692,7 +691,7 @@ background-color: #5c5c5c;">
                     if (increment_num > 0)
                     { 
                         this.char.speed = parseFloat((this.char.defaults.speed_min_diff - (this.char.defaults.speed_inc_diff*net_increment_amount)).toFixed(2));
-                        if (this.char.speed===0)
+                        if (this.char.speed<=0)
                         {
                             this.char.speed=0.1;
                         }
