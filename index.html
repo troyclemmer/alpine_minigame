@@ -318,9 +318,9 @@ background-color: #5c5c5c;">
             this.safe_zone.height = this.arena.height;   
             this.safe_zone.width = Math.floor(this.arena.width/10);  
 
-            if (this.safe_zone.width < this.char.size)
+            if (this.safe_zone.width < this.char.size + 6)
             {
-                this.safe_zone.width = this.char.size + 15;
+                this.safe_zone.width = this.char.size + 6;
             }
                     
             this.end_zone.y = this.arena.y-1;   
