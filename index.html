@@ -112,9 +112,9 @@ background-color: #5c5c5c;">
             game_start: false,
             balance: {
                 linear_weight_decrease: 0.5, //the weight amount every modifier increment for each new modifier (lower number means smaller increment change, 1 is normal)
-                balance_level: 7,
-                balance_early_weight: 0.65, //the lower the number, the more modifiers are weighted in earlier levels
-                balance_late_weight: 3 //the higher the number, the less modifiers are weighted in later levels
+                balance_level: 7, //the last increment level that early weight ends, (for linear, this is the level of stage -1)
+                balance_early_weight: 0.625, //the lower the number, the more modifiers are weighted in earlier levels
+                balance_late_weight: 30 //the lower the number, the more modifiers are weighted in later levels
             }
         },
         arena: { 
@@ -210,7 +210,7 @@ background-color: #5c5c5c;">
                 speed_min_diff: 0.4,
                 speed_inc_diff: 1.20,
                 number_min_diff: 1,
-                number_inc_diff: 1.5
+                number_inc_diff: 1.25
             }
         },
         StartGame() {
@@ -604,15 +604,15 @@ background-color: #5c5c5c;">
             }
             else if (difficulty===1)
             {
-                this.game.level = 30;
+                this.game.level = 25;
             }
             else if (difficulty===2)
             {
-                this.game.level = 45;
+                this.game.level = 40;
             }
             else if (difficulty===3)
             {
-                this.game.level = 55;
+                this.game.level = 60;
             }
 
             this.IncrementModifiers(true);
@@ -667,16 +667,25 @@ background-color: #5c5c5c;">
             {
                 let increment_num = this.game.modifier_increments[i];
 
-                let balance_weight = 1;
+                if (increment_num>0)
+                {
+
+                let net_increment_amount;
 
                 //normalize the difficulty curve by increasing the increment weight for the beginning levels
-                if (increment_num <= this.game.balance.balance_level)
+                if (increment_num > this.game.balance.balance_level)
                 {
-                    balance_weight = this.game.balance.balance_early_weight;  //the lower the number .65, the more modifiers are weighted in earlier levels
+                    let early_inc = this.game.balance.balance_level;
+                    let late_inc = increment_num - this.game.balance.balance_level;
+
+                    let early_amt = (early_inc/(modifier_weight*this.game.balance.balance_early_weight));
+                    let late_amt = (late_inc/(modifier_weight*(this.game.balance.balance_late_weight/late_inc)));
+
+                    net_increment_amount = early_amt+late_amt;
                 }
-                else if (i > this.game.balance.balance_level) //normalize the difficulty curve by decreasing the increment weight for the ending levels
+                else
                 {
-                    balance_weight = (this.game.balance.balance_late_weight/i); //the higher the number X/i , less modifiers are weighted in later levels
+                    net_increment_amount = increment_num/(modifier_weight*this.game.balance.balance_early_weight);
                 }
 
                                
@@ -684,7 +693,7 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     { 
-                        this.char.speed = parseFloat((this.char.defaults.speed_min_diff * (Math.pow(this.char.defaults.speed_inc_diff,increment_num/(modifier_weight*balance_weight)))).toFixed(2));
+                        this.char.speed = parseFloat((this.char.defaults.speed_min_diff * (Math.pow(this.char.defaults.speed_inc_diff,net_increment_amount))).toFixed(2));
                     }
                     else if (increment_num === 0)
                     {
@@ -699,7 +708,7 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.char.size = Math.round(this.char.defaults.size_min_diff * (Math.pow(this.char.defaults.size_inc_diff,increment_num/(modifier_weight*balance_weight))));
+                        this.char.size = Math.round(this.char.defaults.size_min_diff * (Math.pow(this.char.defaults.size_inc_diff,net_increment_amount)));
                     }
                     else if (increment_num === 0)
                     {
@@ -714,8 +723,8 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.enemy.min_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num/(modifier_weight*balance_weight)))).toFixed(2));
-                        this.enemy.max_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,increment_num/(modifier_weight*balance_weight)))).toFixed(2));
+                        this.enemy.min_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,net_increment_amount))).toFixed(2));
+                        this.enemy.max_speed = parseFloat((this.enemy.defaults.speed_min_diff * (Math.pow(this.enemy.defaults.speed_inc_diff,net_increment_amount))).toFixed(2));
                     }
                     else if (increment_num === 0)
                     {
@@ -732,8 +741,8 @@ background-color: #5c5c5c;">
                 {
                     if (increment_num > 0)
                     {
-                        this.enemy.min_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num/(modifier_weight*balance_weight))));
-                        this.enemy.max_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,increment_num/(modifier_weight*balance_weight))));
+                        this.enemy.min_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,net_increment_amount)));
+                        this.enemy.max_size = Math.round(this.enemy.defaults.size_min_diff * (Math.pow(this.enemy.defaults.size_inc_diff,net_increment_amount)));
                     }
                     else if (increment_num === 0)
                     {
@@ -751,7 +760,7 @@ background-color: #5c5c5c;">
                     if (increment_num > 0)
                     {
                         var numBefore = this.enemy.number;
-                        this.enemy.number = Math.ceil(this.enemy.defaults.number_min_diff + (this.enemy.defaults.number_inc_diff*(increment_num/(modifier_weight*balance_weight))));
+                        this.enemy.number = Math.ceil(this.enemy.defaults.number_min_diff + (this.enemy.defaults.number_inc_diff*(net_increment_amount)));
 
                         if (this.game.mode===1 && this.enemy.number<=numBefore)
                         { 
@@ -768,6 +777,8 @@ background-color: #5c5c5c;">
                     }
 
                 }
+
+            }
                 
             }
         },
