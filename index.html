@@ -81,7 +81,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.2.1',
+            version: '1.2.2',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -945,7 +945,7 @@ background-color: #5c5c5c;">
                 white-space: nowrap;">
                     <div style="color:rgb(236, 236, 236);"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Mode:</span><span x-text="game.mode!==null?game.modes[game.mode].name:''" style="font-size:16px; font-weight:normal;"></span></div>
                     <div x-show="game.mode!==0" style="margin-top:2px; color:#dcbcff;"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Modifiers:</span><span x-html="GetModifiersHTML()" :title="GetModifiersString()" style="font-size:16px; font-weight:normal;"></span></div>
-                    <div x-show="game.mode===0" style="margin-left: auto; margin-right: auto; display:flex; margin-top:2px;"><button @click="SandboxRandomize(0)" style="margin-right:4px;">Randomize Easy</button><button @click="SandboxRandomize(1)" style="margin-right:4px;">Randomize Medium</button><button @click="SandboxRandomize(2)" style="margin-right:4px;">Randomize Hard</button><button @click="SandboxRandomize(3)">Randomize Impossible</button></div>
+                    <div x-show="game.mode===0" style="margin-left: auto; margin-right: auto; display:flex; margin-top:2px;"><button @click="SandboxRandomize(0)" style="margin-right:4px; background:#d7ffd7;">Randomize Easy</button><button @click="SandboxRandomize(1)" style="margin-right:4px; background:#fdfda6;">Randomize Medium</button><button @click="SandboxRandomize(2)" style="margin-right:4px; background:#f5ca79;">Randomize Hard</button><button style="background: #ff7575;" @click="SandboxRandomize(3)">Randomize Impossible</button></div>
                 </div>
                 <div style="align-self: end; text-align:right;">
                     <div style="display:flex; flex-direction:column;">
@@ -1276,7 +1276,7 @@ background-color: #5c5c5c;">
         <div style="color:white; font-size:24px; margin-bottom:12px;">Select a mode:</div>
 
         <template x-for="gamemode in game.modes" :key="gamemode.id">
-            <button style="cursor:pointer; border:4px solid; font-size:20px; padding: 10px 5px; width:100%; margin-top:10px;" @click="SelectedGamemode(gamemode.id)" x-html="'<span x-text=\'gamemode.name\'></span><div style=\'font-size: 65%;opacity: .5;margin-top: 5px;\' x-text=\'gamemode.desc\'></div>'">
+            <button style="cursor:pointer; border:4px solid; font-size:20px; padding: 14px 5px; width:100%; margin-top:10px;" @click="SelectedGamemode(gamemode.id)" x-html="'<span x-text=\'gamemode.name\'></span><div style=\'font-size: 65%;opacity: .5;margin-top: 5px;\' x-text=\'gamemode.desc\'></div>'">
             </button>
         </template>
         
