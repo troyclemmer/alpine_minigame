@@ -13,8 +13,4 @@ Dodge minigame made in Alpine.js, just for fun<br>
 <br>
 -refresh page to restart game 
 <br>
--linear modifier mode just adds one increment to each modifier per level
-<br>
--random combo mode randomly distributes total increments to active modifiers
-<br>
 ### play at: https://troyclemmer.dev/dodge/
