@@ -86,7 +86,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.2.4',
+            version: '1.2.5',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -120,7 +120,7 @@ background-color: #5c5c5c;">
             game_start: false,
             balance: {
                 linear_weight_decrease: 0.25, //for linear game mode: the weight amount every modifier increment for each new modifier, 0 = no change for linear, 0.25 = 25% easier for linear, 1 = for every additional modifier, increment amount divided by another full number
-                random_mode_weight: 1.8 //for random combo game mode: for every modifier, number of modifiers^random_mode_weight starting level
+                random_mode_weight: 2.0 //for random combo game mode: start difficult... for every modifier, number of modifiers^random_mode_weight starting level
             }
         },
         arena: { 
@@ -260,11 +260,6 @@ background-color: #5c5c5c;">
 
             if (this.game.mode!==0)
             {
-                if (this.game.mode===2)
-                {
-                    this.game.level = Math.round(Math.pow(this.game.modifiers.length,this.game.balance.random_mode_weight));
-                }
-
                 for (var i = 0; i < this.game.modifiers.length; i++) 
                 {
                     this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])] = 0;
@@ -306,6 +301,13 @@ background-color: #5c5c5c;">
                 {
                     this.arena.width = this.arena.defaults.width_min_diff;
                 } 
+
+                if (this.game.mode===2)
+                {
+                    //balancing for random combo mode to start on a higher level based on amount of modifiers
+                    this.game.level = Math.round(Math.pow(this.game.modifiers.length,this.game.balance.random_mode_weight));
+                    this.IncrementModifiers();
+                }
             }   
             else
             {
