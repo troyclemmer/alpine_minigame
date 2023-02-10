@@ -1,5 +1,5 @@
 # alpine_minigame
-Dodge minigame made in Alpine.js, just for fun<br>
+Dodging game made in Alpine.js, just for fun<br>
 
 @title: Alpine.js Dodge Minigame <br>
 @author: Troy Clemmer <br>
