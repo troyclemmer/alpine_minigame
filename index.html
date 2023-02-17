@@ -96,7 +96,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.2.9',
+            version: '1.2.10',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -245,6 +245,13 @@ background-color: #5c5c5c;">
             this.game.game_start = true;
 
             this.$watch('enemy.number', () => this.SetEnemies());
+
+            this.$watch('enemy.min_speed', () => this.UpdateEnemiesSpeed());
+            this.$watch('enemy.max_speed', () => this.UpdateEnemiesSpeed());
+            this.$watch('enemy.min_size', () => this.UpdateEnemiesSize());
+            this.$watch('enemy.max_size', () => this.UpdateEnemiesSize());
+            this.$watch('enemy.color', () => this.UpdateEnemiesColor());
+
             
             $interval(() => this.UpdateGame(), 1000/this.game.fps);
             
@@ -427,6 +434,44 @@ background-color: #5c5c5c;">
             this.char.y = this.arena.y-(this.char.size/2)+Math.floor(this.arena.height/2);
 
             setTimeout(() => $('#'+this.char.id).show('slow'), 100); 
+        },
+        UpdateEnemiesSpeed() {
+            for (var i = 0; i < this.enemy.instances.length; i++) 
+            { 
+                let enemy_speedx = randomFloatFromInterval(this.enemy.min_speed,this.enemy.max_speed);
+                if (Math.floor(Math.random() * 2) == 0)
+                {
+                    enemy_speedx*=-1;
+                }
+
+                let enemy_speedy = randomFloatFromInterval(-1*this.enemy.max_speed,this.enemy.max_speed);
+                if (Math.floor(Math.random() * 2) == 0)
+                {
+                    enemy_speedy*=-1;
+                }
+
+                this.enemy.instances[i].speedx = enemy_speedx;
+                this.enemy.instances[i].speedy = enemy_speedy;
+                
+                this.SetEnemyLabel(this.enemy.instances[i].id,enemy_speedx,this.enemy.instances[i].width); 
+            }
+        },
+        UpdateEnemiesSize() {
+            for (var i = 0; i < this.enemy.instances.length; i++) 
+            { 
+                let enemy_size = randomIntFromInterval(this.enemy.min_size,this.enemy.max_size);
+
+                this.enemy.instances[i].width = enemy_size;
+                this.enemy.instances[i].height = enemy_size;
+
+                this.SetEnemyLabel(this.enemy.instances[i].id,this.enemy.instances[i].speedx,enemy_size); 
+            }
+        },
+        UpdateEnemiesColor() {
+            for (var i = 0; i < this.enemy.instances.length; i++) 
+            { 
+                this.enemy.instances[i].color = this.enemy.color;
+            }
         },
         UpdateEnemies() {
             for (var i = 0; i < this.enemy.instances.length; i++) 
@@ -912,19 +957,28 @@ background-color: #5c5c5c;">
             })
 
 
+            this.SetEnemyLabel(enemy_id,enemy_speedx,enemy_sizex);           
 
-
-                if (this.game.show_labels && enemy_sizex >= 40)
-                {
-                    var fontSize = (enemy_sizex/3).toFixed(1);
-                    var labels = $('<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+Math.abs(enemy_speedx)+'</div>'+'<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+enemy_sizex+'</div>');
-
-                    this.$nextTick(() => 
-				    { 
-                        $('#'+enemy_id).append(labels);
-				    });
-                }            
-
+        },
+        SetEnemyLabel(enemy_id,enemy_speed,enemy_size) {
+            if (this.game.show_labels && enemy_size >= 40)
+            {
+                var fontSize = (enemy_size/3).toFixed(1);
+                var labels = $('<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+Math.abs(enemy_speed)+'</div>'+'<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+enemy_size+'</div>');
+                
+                this.$nextTick(() => 
+			    { 
+                    $('#'+enemy_id).empty();
+                    $('#'+enemy_id).append(labels);
+			    });
+            }
+            else
+            {
+                this.$nextTick(() => 
+			    { 
+                    $('#'+enemy_id).empty();
+			    });
+            }
         },
         SetEnemies()
         {
