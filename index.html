@@ -96,7 +96,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.3.2',
+            version: '1.3.6',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -126,6 +126,7 @@ background-color: #5c5c5c;">
             fps: 100,
             slowmo_modifier: 1,
             deaths: 0,
+            settings_open: false,
             show_labels: false,
             random_enemy_color: true,
             game_start: false,
@@ -253,6 +254,7 @@ background-color: #5c5c5c;">
             this.$watch('enemy.min_size', () => this.UpdateEnemiesSize());
             this.$watch('enemy.max_size', () => this.UpdateEnemiesSize());
             this.$watch('enemy.color', () => this.UpdateEnemiesColor());
+            this.$watch('game.random_enemy_color', () => this.UpdateEnemiesColor());
 
             
             $interval(() => this.UpdateGame(), 1000/this.game.fps);
@@ -340,7 +342,6 @@ background-color: #5c5c5c;">
             }   
             else
             {
-                this.game.show_labels = true;
                 this.enemy.min_size = this.enemy.defaults.min_size;
                 this.enemy.max_size = this.enemy.defaults.max_size;
                 this.enemy.min_speed = this.enemy.defaults.min_speed;
@@ -437,6 +438,17 @@ background-color: #5c5c5c;">
 
             setTimeout(() => $('#'+this.char.id).show('slow'), 100); 
         },
+        SetAllEnemyLabels() {
+            for (var i = 0; i < this.enemy.instances.length; i++) 
+            {
+                let biggerspeed = this.enemy.instances[i].speedx;
+                if (Math.abs(this.enemy.instances[i].speedy) > Math.abs(biggerspeed))
+                {
+                    biggerspeed = this.enemy.instances[i].speedy;
+                }
+                this.SetEnemyLabel(this.enemy.instances[i].id,biggerspeed,this.enemy.instances[i].width,true);
+            }             
+        },
         UpdateEnemiesSpeed() {
             for (var i = 0; i < this.enemy.instances.length; i++) 
             { 
@@ -464,8 +476,14 @@ background-color: #5c5c5c;">
 
                 this.enemy.instances[i].speedx = enemy_speedx;
                 this.enemy.instances[i].speedy = enemy_speedy;
+
+                let biggerspeed = enemy_speedx;
+                if (Math.abs(enemy_speedy)>Math.abs(enemy_speedx))
+                {
+                    biggerspeed = enemy_speedy;
+                }
                 
-                this.SetEnemyLabel(this.enemy.instances[i].id,enemy_speedx,this.enemy.instances[i].width); 
+                this.SetEnemyLabel(this.enemy.instances[i].id,biggerspeed,this.enemy.instances[i].width); 
             }
         },
         UpdateEnemiesSize() {
@@ -476,13 +494,26 @@ background-color: #5c5c5c;">
                 this.enemy.instances[i].width = enemy_size;
                 this.enemy.instances[i].height = enemy_size;
 
-                this.SetEnemyLabel(this.enemy.instances[i].id,this.enemy.instances[i].speedx,enemy_size); 
+                let biggerspeed = this.enemy.instances[i].speedx;
+                if (Math.abs(this.enemy.instances[i].speedy)>Math.abs(biggerspeed))
+                {
+                    biggerspeed = this.enemy.instances[i].speedy;
+                }
+
+                this.SetEnemyLabel(this.enemy.instances[i].id,biggerspeed,enemy_size); 
             }
         },
         UpdateEnemiesColor() {
             for (var i = 0; i < this.enemy.instances.length; i++) 
             { 
-                this.enemy.instances[i].color = this.enemy.color;
+                if (this.game.random_enemy_color)
+                {
+                    this.enemy.instances[i].color = 'rgb('+randomIntFromInterval(0,255)+','+randomIntFromInterval(0,255)+','+randomIntFromInterval(0,255)+')';
+                }
+                else
+                {
+                    this.enemy.instances[i].color = this.enemy.color;
+                }
             }
         },
         UpdateEnemies() {
@@ -984,12 +1015,18 @@ background-color: #5c5c5c;">
                 color: e_color
             })
 
+            let biggerspeed = enemy_speedx;
+                if (Math.abs(enemy_speedy)>Math.abs(enemy_speedx))
+                {
+                    biggerspeed = enemy_speedy;
+                }
 
-            this.SetEnemyLabel(enemy_id,enemy_speedx,enemy_sizex);           
+
+            this.SetEnemyLabel(enemy_id,biggerspeed,enemy_sizex);           
 
         },
-        SetEnemyLabel(enemy_id,enemy_speed,enemy_size) {
-            if (this.game.show_labels && enemy_size >= 40)
+        SetEnemyLabel(enemy_id,enemy_speed,enemy_size,bypass=false) {
+            if ((this.game.show_labels||bypass) && enemy_size >= 40)
             {
                 var fontSize = (enemy_size/3).toFixed(1);
                 var labels = $('<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+Math.abs(enemy_speed)+'</div>'+'<div class=\'enemy_label\' style=\'font-size:'+fontSize+'px; font-weight:900; white-space:nowrap; margin: 3px 3px 1px; color:white; text-align:center;\'>'+enemy_size+'</div>');
@@ -1043,7 +1080,39 @@ background-color: #5c5c5c;">
     x-cloak
     id="game">
 
-    <div x-show="game.mode!==null && (game.mode===0 || (game.modifiers.length>0 && game.game_start))" style="position:absolute;top:0;left:0"><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @click="RestartGame()">Restart Game</button></div>
+    <div x-show="game.mode!==null && (game.mode===0 || (game.modifiers.length>0 && game.game_start))" style="position:absolute;top:0;left:0"><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @click="RestartGame()">Restart Game</button><span style="color: #b9b9b9;font-size: 12px;">&bull;</span><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @click="game.settings_open=true">Settings</button></div>
+
+    <div x-show="game.settings_open" @mousedown.outside="game.settings_open=false" style="width:200px; position:absolute;top:30px;left:100px; background:white; border:3px solid black; padding:15px; z-index: 150; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);">
+        
+        <div style="" x-id="['settings-input']">
+            <label style="font-size:14px;" :for="$id('settings-input')">Character Color</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%;" type="color" x-model="char.color" @input="char.border_color=char.color" :id="$id('settings-input')">
+                <button @click="char.color=char.defaults.color;char.border_color=char.defaults.border_color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+            </div>
+        </div>
+
+        <div style="margin-top:15px; display: flex; align-items: center;" x-id="['modifier-input']">
+            <input style="height:20px;width:20px; margin-right:10px;" type="checkbox" x-model="game.show_labels" @input="!game.show_labels?SetAllEnemyLabels():$('.enemy_label').remove()" :id="$id('modifier-input')">
+            <label style="font-size:14px;" :for="$id('modifier-input')">Show Enemy Labels</label>
+        </div>
+
+        <div style="margin-top:15px; display: flex; align-items: center;" x-id="['modifier-input']">
+            <input style="height:20px;width:20px; margin-right:10px;" type="checkbox" x-model="game.random_enemy_color" :id="$id('modifier-input')">
+            <label style="font-size:14px;" :for="$id('modifier-input')">Random Enemy Color</label>
+        </div>
+
+        <div x-show="!game.random_enemy_color" style="margin-top:15px;" x-id="['modifier-input']">
+            <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Color</label>
+         
+            <div style="display:flex; margin-top:2px;">
+                <input style="flex-grow: 1; width:100%;" type="color" x-model="enemy.color" :id="$id('modifier-input')">
+                <button @click="enemy.color=enemy.defaults.color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+            </div>
+        </div>
+
+    </div>
 
     <div x-show="game.mode!==null && (game.mode===0 || (game.modifiers.length>0 && game.game_start))">
     <div style="display:flex; min-height: 100vh;">
@@ -1060,7 +1129,7 @@ background-color: #5c5c5c;">
                 <div style="overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;">
-                    <div style="color:rgb(236, 236, 236);"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Mode:</span><span x-text="game.mode!==null?game.modes[game.mode].name:''" style="font-size:16px; font-weight:normal;"></span></div>
+                    <div style="color:rgb(236, 236, 236);"><span style="font-weight:bold; font-size:16px; margin-right:5px;">Mode:</span><span x-text="game.mode!==null?game.modes[game.mode].name:''" style="font-size:18px; font-weight:normal;"></span></div>
                     <div x-show="game.mode!==0" style="margin-top:2px; color:#dcbcff;"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Modifiers:</span><span x-html="GetModifiersHTML()" :title="GetModifiersString()" style="font-size:16px; font-weight:normal;"></span></div>
                     <div x-show="game.mode===0" style="margin-left: auto; margin-right: auto; display:flex; margin-top:2px;"><button @click="SandboxRandomize(0)" class="hover" style="margin-right:4px; background:#d7ffd7;">Randomize Easy</button><button @click="SandboxRandomize(1)" class="hover" style="margin-right:4px; background:#fdfda6;">Randomize Medium</button><button @click="SandboxRandomize(2)" class="hover" style="margin-right:4px; background:#f5ca79;">Randomize Hard</button><button class="hover" style="background: #ff7575;" @click="SandboxRandomize(3)">Randomize Impossible</button></div>
                 </div>
@@ -1140,7 +1209,7 @@ background-color: #5c5c5c;">
             <div style="text-align:center; margin-bottom:10px; font-weight:700; font-size:90%;">Arena</div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[6]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Arena Width<sup x-show="game.mode!==0 && game.modifier_increments[6]>=0" x-text="game.modifier_increments[6]"></sup></label>
+            <label :style="game.modifier_increments[6]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Arena Width<sup x-show="game.mode!==0 && game.modifier_increments[6]>=0" x-text="game.modifier_increments[6]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[6]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1150,7 +1219,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[5]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Arena Height<sup x-show="game.mode!==0 && game.modifier_increments[5]>=0" x-text="game.modifier_increments[5]"></sup></label>
+            <label :style="game.modifier_increments[5]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Arena Height<sup x-show="game.mode!==0 && game.modifier_increments[5]>=0" x-text="game.modifier_increments[5]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[5]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1161,7 +1230,7 @@ background-color: #5c5c5c;">
 
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Arena Color</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Arena Color</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%;" type="color" @input="arena.border_color=pSBC(-.96,arena.color)" x-model="arena.color" :id="$id('modifier-input')">
@@ -1178,7 +1247,7 @@ background-color: #5c5c5c;">
             <div style="text-align:center; margin-bottom:10px; font-weight:700; font-size:90%;">Character</div>
 
         <div style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[0]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Character Speed<sup x-show="game.mode!==0 && game.modifier_increments[0]>=0" x-text="game.modifier_increments[0]"></sup></label>
+            <label :style="game.modifier_increments[0]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Character Speed<sup x-show="game.mode!==0 && game.modifier_increments[0]>=0" x-text="game.modifier_increments[0]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[0]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1188,7 +1257,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[1]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Character Size<sup x-show="game.mode!==0 && game.modifier_increments[1]>=0" x-text="game.modifier_increments[1]"></sup></label>
+            <label :style="game.modifier_increments[1]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Character Size<sup x-show="game.mode!==0 && game.modifier_increments[1]>=0" x-text="game.modifier_increments[1]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[1]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1198,7 +1267,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Character X</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Character X</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="char.x" :id="$id('modifier-input')">
@@ -1207,7 +1276,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Character Y</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Character Y</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" x-model.number="char.y" :id="$id('modifier-input')">
@@ -1216,7 +1285,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Character Color</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Character Color</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%;" type="color" x-model="char.color" @input="char.border_color=char.color" :id="$id('modifier-input')">
@@ -1234,7 +1303,7 @@ background-color: #5c5c5c;">
 
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Enemy Min Speed</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Min Speed</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.min_speed" :id="$id('modifier-input')">
@@ -1243,7 +1312,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Enemy Max Speed</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Max Speed</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" step="0.5" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.max_speed" :id="$id('modifier-input')">
@@ -1252,7 +1321,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode!==0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[2]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Enemy Speed<sup x-show="game.mode!==0 && game.modifier_increments[2]>=0" x-text="game.modifier_increments[2]"></sup></label>
+            <label :style="game.modifier_increments[2]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Enemy Speed<sup x-show="game.mode!==0 && game.modifier_increments[2]>=0" x-text="game.modifier_increments[2]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-html="game.modifier_increments[2]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1261,7 +1330,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Enemy Min Size</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Min Size</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.min_size" :id="$id('modifier-input')">
@@ -1270,7 +1339,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Enemy Max Size</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Max Size</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="enemy.max_size" :id="$id('modifier-input')">
@@ -1279,7 +1348,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode!==0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[3]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Enemy Size<sup x-show="game.mode!==0 && game.modifier_increments[3]>=0" x-text="game.modifier_increments[3]"></sup></label>
+            <label :style="game.modifier_increments[3]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Enemy Size<sup x-show="game.mode!==0 && game.modifier_increments[3]>=0" x-text="game.modifier_increments[3]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-html="game.modifier_increments[3]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1288,7 +1357,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label :style="game.modifier_increments[4]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('text-input')">Number of Enemies<sup x-show="game.mode!==0 && game.modifier_increments[4]>=0" x-text="game.modifier_increments[4]"></sup></label>
+            <label :style="game.modifier_increments[4]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Number of Enemies<sup x-show="game.mode!==0 && game.modifier_increments[4]>=0" x-text="game.modifier_increments[4]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
                 <div style="border: solid 1px rgba(118, 118, 118, 0.3);padding: 3px;border-right: none;padding-bottom: 4px; font-weight:bold;" x-show="game.mode!==0" x-html="game.modifier_increments[4]<0 ? '<span style=\'color: rgb(64 64 64); filter: grayscale(100%);font-size:14px;\'>🔒</span>' : '<span style=\'color: #a95efb;font-size:17px;\'>⇆</span>'"></div>
@@ -1298,7 +1367,7 @@ background-color: #5c5c5c;">
         </div>
 
         <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-            <label style="font-size:14px;" :for="$id('text-input')">Enemy Color</label>
+            <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Color</label>
          
             <div style="display:flex; margin-top:2px;">
                 <input style="flex-grow: 1; width:100%;" type="color" x-model="enemy.color" :id="$id('modifier-input')">
@@ -1318,7 +1387,7 @@ background-color: #5c5c5c;">
             
 
             <div style="margin-bottom:8px;" x-id="['modifier-input']">
-                <label style="font-size:14px;" :for="$id('text-input')">Safe Zone Width</label>
+                <label style="font-size:14px;" :for="$id('modifier-input')">Safe Zone Width</label>
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" x-model.number="safe_zone.width" :id="$id('modifier-input')">
@@ -1328,7 +1397,7 @@ background-color: #5c5c5c;">
 
 
             <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-                <label style="font-size:14px;" :for="$id('text-input')">Safe Zone Color</label>
+                <label style="font-size:14px;" :for="$id('modifier-input')">Safe Zone Color</label>
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%;" type="color" @input="safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'" x-model="safe_zone.border_color" :id="$id('modifier-input')">
@@ -1348,7 +1417,7 @@ background-color: #5c5c5c;">
 
 
             <div style="margin-bottom:8px;" x-id="['modifier-input']">
-                <label style="font-size:14px;" :for="$id('text-input')">End Zone Width</label>
+                <label style="font-size:14px;" :for="$id('modifier-input')">End Zone Width</label>
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%; padding:2px 5px; font-size:16px;" type="number" min="0" oninput="this.value = !!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null" @input="end_zone.x = arena.x + arena.width - end_zone.width" x-model.number="end_zone.width" :id="$id('modifier-input')">
@@ -1359,7 +1428,7 @@ background-color: #5c5c5c;">
 
 
             <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
-                <label style="font-size:14px;" :for="$id('text-input')">End Zone Color</label>
+                <label style="font-size:14px;" :for="$id('modifier-input')">End Zone Color</label>
              
                 <div style="display:flex; margin-top:2px;">
                     <input style="flex-grow: 1; width:100%;" type="color" @input="end_zone.color = pSBC(0.35,end_zone.border_color)+'66'" x-model="end_zone.border_color" :id="$id('modifier-input')">
