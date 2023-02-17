@@ -96,7 +96,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.3.6',
+            version: '1.3.7',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -255,6 +255,8 @@ background-color: #5c5c5c;">
             this.$watch('enemy.max_size', () => this.UpdateEnemiesSize());
             this.$watch('enemy.color', () => this.UpdateEnemiesColor());
             this.$watch('game.random_enemy_color', () => this.UpdateEnemiesColor());
+
+            this.$watch('char.color', () => this.UpdateMIColor());
 
             
             $interval(() => this.UpdateGame(), 1000/this.game.fps);
@@ -515,6 +517,10 @@ background-color: #5c5c5c;">
                     this.enemy.instances[i].color = this.enemy.color;
                 }
             }
+        },
+        UpdateMIColor() {
+            this.mi.color = pSBC(0.5,this.char.color)+'66';
+            this.mi.border_color = pSBC(0.2,this.char.color);
         },
         UpdateEnemies() {
             for (var i = 0; i < this.enemy.instances.length; i++) 
@@ -1593,7 +1599,7 @@ const pSBC=(p,c0,c1,l)=>{
 
 
     </script>
-    <script src="https://unpkg.com/@alpine-collective/toolkit@1.0.2/dist/cdn.min.js" defer></script>
-	<script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+    <script src="alpine-toolkit.js" defer></script>
+	<script defer src="alpine.js"></script>
 </body>
 </html>
