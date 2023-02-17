@@ -96,7 +96,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.2.10',
+            version: '1.2.11',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -216,6 +216,7 @@ background-color: #5c5c5c;">
             max_size: 0,
             min_speed: 0,
             max_speed: 0,
+            speed_tolerance: .25, //speed can be += rand(.1) for x or y just so different angles get created
             defaults: {
                 number: 14,
                 size: 45,
@@ -438,13 +439,15 @@ background-color: #5c5c5c;">
         UpdateEnemiesSpeed() {
             for (var i = 0; i < this.enemy.instances.length; i++) 
             { 
-                let enemy_speedx = randomFloatFromInterval(this.enemy.min_speed,this.enemy.max_speed);
+                let enemy_speedx = randomFloatFromInterval(-1*this.enemy.max_speed,this.enemy.max_speed);
+
                 if (Math.floor(Math.random() * 2) == 0)
                 {
                     enemy_speedx*=-1;
                 }
 
-                let enemy_speedy = randomFloatFromInterval(-1*this.enemy.max_speed,this.enemy.max_speed);
+                let enemy_speedy = randomFloatFromInterval(this.enemy.min_speed,this.enemy.max_speed);
+
                 if (Math.floor(Math.random() * 2) == 0)
                 {
                     enemy_speedy*=-1;
@@ -927,13 +930,13 @@ background-color: #5c5c5c;">
             let enemy_sizey = enemy_size;
 
 
-            let enemy_speedx = randomFloatFromInterval(this.enemy.min_speed,this.enemy.max_speed);
+            let enemy_speedx = randomFloatFromInterval(-1*this.enemy.max_speed,this.enemy.max_speed);
             if (Math.floor(Math.random() * 2) == 0)
             {
                 enemy_speedx*=-1;
             }
 
-            let enemy_speedy = randomFloatFromInterval(-1*this.enemy.max_speed,this.enemy.max_speed);
+            let enemy_speedy = randomFloatFromInterval(this.enemy.min_speed,this.enemy.max_speed);
             if (Math.floor(Math.random() * 2) == 0)
             {
                 enemy_speedy*=-1;
