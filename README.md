@@ -5,7 +5,7 @@ Dodging game made in Alpine.js, just for fun<br>
 @author: Troy Clemmer <br>
 @startdate: 2023-01-31 <br>
 @tech: alpine.js, jquery, css, html <br>
-@link: https://troyclemmer.dev/dodge/
+@link: https://troyclemmer.dev/games/dodge/
 <br><br>
 -doesn't work on mobile,
 <br>
@@ -13,4 +13,4 @@ Dodging game made in Alpine.js, just for fun<br>
 <br>
 -refresh page to restart game 
 <br>
-### play at: https://troyclemmer.dev/dodge/
+### play at: https://troyclemmer.dev/games/dodge/
