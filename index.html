@@ -94,7 +94,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.5.0',
+            version: '1.5.1',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -803,7 +803,7 @@ background-color: #5c5c5c;">
             }
             else
             {
-                alert('You died!\n\n---Stats---\nMode:'+this.game.modes[this.game.mode].name+'\nTime:'+this.game.time+' seconds\nLevel: '+this.game.level+'\nModifiers: '+this.GetModifiersString()+'\n\nclick OK to restart');
+                alert('You died!\n\n---Stats---\nMode: '+this.game.modes[this.game.mode].name+'\nTime: '+this.game.time+' seconds\nLevel: '+this.game.level+'\nModifiers:\n'+this.GetModifiersString()+'\n\nclick OK to restart');
                 location.reload();
             }
         },
