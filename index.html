@@ -94,7 +94,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.5.1',
+            version: '1.5.2',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -306,6 +306,9 @@ background-color: #5c5c5c;">
                 this.end_zone.color = pSBC(0.35,this.end_zone.border_color)+'66';
             }
 
+        },
+        Pause() {
+            alert('Game paused, press OK to resume');
         },
         RestartGame() {
             //this.game.mode=null;
@@ -803,7 +806,7 @@ background-color: #5c5c5c;">
             }
             else
             {
-                alert('You died!\n\n---Stats---\nMode: '+this.game.modes[this.game.mode].name+'\nTime: '+this.game.time+' seconds\nLevel: '+this.game.level+'\nModifiers:\n'+this.GetModifiersString()+'\n\nclick OK to restart');
+                alert('You died!\n\n---Stats---\nMode: '+this.game.modes[this.game.mode].name+'\nTime: '+this.game.time+' seconds\nLevel: '+this.game.level+'\nModifiers('+this.game.modifiers.length+'):\n'+this.GetModifiersString()+'\n\nclick OK to restart');
                 location.reload();
             }
         },
@@ -917,7 +920,7 @@ background-color: #5c5c5c;">
                     //for every modifier, add to a random modifier
                     for (var i = 0; i < this.game.modifiers.length; i++) 
                     {
-                        this.game.modifier_increments[randomIntFromInterval(0,this.game.modifiers.length-1)]++;
+                        this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[randomIntFromInterval(0,this.game.modifiers.length-1)])]++;
                     }
 
                     this.AssignModifiers();
@@ -1235,7 +1238,7 @@ background-color: #5c5c5c;">
     x-cloak
     id="game">
 
-    <div x-show="game.mode!==null && (game.mode===0 || (game.modifiers.length>0 && game.game_start))" style="position:absolute;top:0;left:0"><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @click="RestartGame()">Restart Game</button><span style="color: #b9b9b9;font-size: 12px;">&bull;</span><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @mousedown="game.settings_open=true">Settings</button></div>
+    <div x-show="game.mode!==null && (game.mode===0 || (game.modifiers.length>0 && game.game_start))" style="position:absolute;top:0;left:0"><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @click="RestartGame()">Restart Game</button><span style="color: #b9b9b9;font-size: 12px;">&bull;</span><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @mousedown="game.settings_open=true">Settings</button><span style="color: #b9b9b9;font-size: 12px;">&bull;</span><button class="hover" style="cursor:pointer; background: none;border: none;color: #838383;font-size: 12px;font-weight: 700;" @click="Pause()">Pause</button></div>
 
     <div x-show="game.settings_open" @mousedown.outside="game.settings_open=false" style="width:200px; position:absolute;top:30px;left:100px; background:white; border:3px solid black; padding:15px; z-index: 150; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);">
         
