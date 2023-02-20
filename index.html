@@ -22,10 +22,8 @@ background-color: #5c5c5c;">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alpine.js Dodge</title>
-   <script
-    src="https://code.jquery.com/jquery-3.6.3.min.js"
-    integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
-    crossorigin="anonymous"></script>
+    <script src="res/jquery-3.6.3.min.js"></script>
+    <script src="res/js.cookie.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,7 +94,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.3.8',
+            version: '1.4.1',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -110,13 +108,13 @@ background-color: #5c5c5c;">
             },
             { 
                 id: 1, 
-                name: 'Linear Modifier Mode', 
-                desc: 'Adds one increment to each modifier per level but modifiers increment at 25% less per additional modifier past 1.'
+                name: 'Normal Linear Modifier', 
+                desc: 'Adds one increment to each modifier per level.'
             },
             { 
                 id: 2, 
-                name: 'Random Combo Mode', 
-                desc: 'Randomly distributes total increments to active modifiers. +1 modifier increment per level. Starting level increases for every modifier.'
+                name: 'Normal Random Combo', 
+                desc: 'Randomly distributes total increments to active modifiers. +1 modifier increment per level per modifier.'
             }
             //{ id: 3, name: 'Timed' }
             ],            
@@ -130,8 +128,9 @@ background-color: #5c5c5c;">
             show_labels: false,
             random_enemy_color: true,
             game_start: false,
+            timed: false,
             balance: {
-                linear_weight_decrease: 0.25, //for linear game mode: the weight amount every modifier increment for each new modifier, 0 = no change for linear, 0.25 = 25% easier for linear, 1 = for every additional modifier, increment amount divided by another full number
+                linear_weight_decrease: 0.1, //for linear game mode: the weight amount every modifier increment for each new modifier, 0 = no change for linear, 0.25 = 25% easier for linear, 1 = for every additional modifier, increment amount divided by another full number
                 random_mode_weight: 6 //for random combo game mode: start difficult... for every modifier, if # modifiers != 0, number of modifiers*random_mode_weight starting level, else 1
             }
         },
@@ -148,9 +147,9 @@ background-color: #5c5c5c;">
                 border_color: '#2c2c2c',
                 border_width: 8,
                 width_min_diff: 1100,
-                width_inc_diff: 30,
+                width_inc_diff: 20,
                 height_min_diff: 650,
-                height_inc_diff: 20,
+                height_inc_diff: 10,
             },
             color: null,
             border_color: null,
@@ -190,8 +189,8 @@ background-color: #5c5c5c;">
                 color: '#7900ff',
                 border_color: '#7900ff',
                 size_min_diff: 5,
-                size_inc_diff: 5,
-                speed_min_diff: 6,
+                size_inc_diff: 4,
+                speed_min_diff: 5,
                 speed_inc_diff: .25
             },
             x: 0,
@@ -221,7 +220,7 @@ background-color: #5c5c5c;">
             min_angle: .5, //the lowest speed for the angle speed vector (if it was 0, it could have no speed in one direction)
             defaults: {
                 number: 14,
-                size: 45,
+                size: 40,
                 speed: 2,
                 min_size: 5,
                 max_size: 100,
@@ -229,12 +228,71 @@ background-color: #5c5c5c;">
                 max_speed: 6,
                 color: '#FF0000',
                 size_min_diff: 5,
-                size_inc_diff: 5,
+                size_inc_diff: 3,
                 speed_min_diff: 0.4,
-                speed_inc_diff: .25,
+                speed_inc_diff: .2,
                 number_min_diff: 1,
-                number_inc_diff: 1.5
+                number_inc_diff: 1
             }
+        },
+        SaveSettings()
+        {
+            this.$nextTick(() => 
+			    { 
+                    Cookies.set('enemy_labels', this.game.show_labels?'true':'false', { expires: 365 });
+                    Cookies.set('random_color', this.game.random_enemy_color?'true':'false', { expires: 365 }); 
+
+                    Cookies.set('char_color', this.char.color, { expires: 365 });
+                    Cookies.set('enemy_color', this.enemy.color, { expires: 365 });
+                    Cookies.set('arena_color', this.arena.color, { expires: 365 });
+                    Cookies.set('safezone_color', this.safe_zone.border_color, { expires: 365 });
+                    Cookies.set('endzone_color', this.end_zone.border_color, { expires: 365 });
+			    });
+        },
+        LoadSettings() {
+            
+            if (typeof(Cookies.get('enemy_labels')) !== 'undefined')
+            {
+                this.game.show_labels = Cookies.get('enemy_labels')==='true'?true:false;
+            }
+
+            if (typeof(Cookies.get('random_color')) !== 'undefined')
+            {
+                this.game.random_enemy_color = Cookies.get('random_color')==='true'?true:false;
+            }
+
+            if (typeof(Cookies.get('char_color')) !== 'undefined')
+            {
+                this.char.color = Cookies.get('char_color');
+                this.char.border_color = this.char.color;
+            }
+
+            if (typeof(Cookies.get('enemy_color')) !== 'undefined')
+            {
+                if (!this.game.random_enemy_color)
+                {
+                    this.enemy.color = Cookies.get('enemy_color');
+                }
+            }
+
+            if (typeof(Cookies.get('arena_color')) !== 'undefined')
+            {
+                this.arena.color = Cookies.get('arena_color');
+                this.arena.border_color = pSBC(-.96,this.arena.color)
+            }
+
+            if (typeof(Cookies.get('safezone_color')) !== 'undefined')
+            {
+                this.safe_zone.border_color = Cookies.get('safezone_color');
+                this.safe_zone.color = pSBC(0.35,this.safe_zone.border_color)+'66';
+            }
+
+            if (typeof(Cookies.get('endzone_color')) !== 'undefined')
+            {
+                this.end_zone.border_color = Cookies.get('endzone_color');
+                this.end_zone.color = pSBC(0.35,this.end_zone.border_color)+'66';
+            }
+
         },
         RestartGame() {
             //this.game.mode=null;
@@ -263,7 +321,8 @@ background-color: #5c5c5c;">
             
             this.$nextTick(() => 
 				{ 
-                    this.SetDefaults();                 
+                    this.SetDefaults();  
+                    this.LoadSettings();               
 				});
         },
         SetDefaults()
@@ -335,12 +394,14 @@ background-color: #5c5c5c;">
                     this.arena.width = this.arena.defaults.width_min_diff;
                 } 
 
+                /*
                 if (this.game.mode===2 && this.game.modifiers.length>1)
                 {
                     //balancing for random combo mode to start on a higher level based on amount of modifiers
                     this.game.level = this.game.modifiers.length*this.game.balance.random_mode_weight;
                     this.IncrementModifiers();
                 }
+                */
             }   
             else
             {
@@ -739,19 +800,19 @@ background-color: #5c5c5c;">
 
             if (difficulty===0)
             {
-                this.game.level = 15;
+                this.game.level = 5;
             }
             else if (difficulty===1)
             {
-                this.game.level = 30;
+                this.game.level = 10;
             }
             else if (difficulty===2)
             {
-                this.game.level = 48;
+                this.game.level = 22;
             }
             else if (difficulty===3)
             {
-                this.game.level = 80;
+                this.game.level = 35;
             }
 
             this.IncrementModifiers(true);
@@ -776,7 +837,7 @@ background-color: #5c5c5c;">
             {
                 this.ResetModifiersToZero();
 
-                for (var i = 0; i < this.game.level-1; i++) //for every level we completed
+                for (var i = 0; i < (this.game.level-1)*this.game.modifiers.length; i++) //for every level we completed times every modifier
                 {
                     //get a random modifier out of the modifiers active
                     let rand_modifier = this.game.modifiers[randomIntFromInterval(0,(this.game.modifiers.length-1))];
@@ -794,11 +855,13 @@ background-color: #5c5c5c;">
         {
             let modifier_weight = 1;
 
-            //set modifier weight for linear mode
-            if (this.game.mode===1)
+            
+            //set modifier weight for all modes
+            if (true)//this.game.mode===1
             {
                 modifier_weight = this.game.modifiers.length===1 ? 1 : 1 + ((this.game.modifiers.length - 1) * this.game.balance.linear_weight_decrease);
             }
+            
 
 
             //can just loop modifiers and increment based on their increment 
@@ -1091,12 +1154,12 @@ background-color: #5c5c5c;">
     <div x-show="game.settings_open" @mousedown.outside="game.settings_open=false" style="width:200px; position:absolute;top:30px;left:100px; background:white; border:3px solid black; padding:15px; z-index: 150; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);">
         
         <div style="display: flex; align-items: center;" x-id="['modifier-input']">
-            <input style="height:20px;width:20px; margin-right:10px;" type="checkbox" x-model="game.show_labels" @input="!game.show_labels?SetAllEnemyLabels():$('.enemy_label').remove()" :id="$id('modifier-input')">
+            <input style="height:20px;width:20px; margin-right:10px;" type="checkbox" x-model="game.show_labels" @input="!game.show_labels?SetAllEnemyLabels():$('.enemy_label').remove();SaveSettings()" :id="$id('modifier-input')">
             <label style="font-size:14px;" :for="$id('modifier-input')">Show Enemy Labels</label>
         </div>
 
         <div style="margin-top:15px; display: flex; align-items: center;" x-id="['modifier-input']">
-            <input style="height:20px;width:20px; margin-right:10px;" type="checkbox" x-model="game.random_enemy_color" :id="$id('modifier-input')">
+            <input style="height:20px;width:20px; margin-right:10px;" type="checkbox" x-model="game.random_enemy_color" @input="SaveSettings()" :id="$id('modifier-input')">
             <label style="font-size:14px;" :for="$id('modifier-input')">Random Enemy Color</label>
         </div>
 
@@ -1104,8 +1167,8 @@ background-color: #5c5c5c;">
             <label style="font-size:14px;" :for="$id('modifier-input')">Enemy Color</label>
          
             <div style="display:flex; margin-top:2px;">
-                <input style="flex-grow: 1; width:100%;" type="color" x-model="enemy.color" :id="$id('modifier-input')">
-                <button @click="enemy.color=enemy.defaults.color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+                <input style="flex-grow: 1; width:100%;" type="color" x-model="enemy.color" @input="SaveSettings()" :id="$id('modifier-input')">
+                <button @click="enemy.color=enemy.defaults.color;SaveSettings()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1113,8 +1176,8 @@ background-color: #5c5c5c;">
             <label style="font-size:14px;" :for="$id('settings-input')">Character Color</label>
          
             <div style="display:flex; margin-top:2px;">
-                <input style="flex-grow: 1; width:100%;" type="color" x-model="char.color" @input="char.border_color=char.color" :id="$id('settings-input')">
-                <button @click="char.color=char.defaults.color;char.border_color=char.defaults.border_color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+                <input style="flex-grow: 1; width:100%;" type="color" x-model="char.color" @input="char.border_color=char.color;SaveSettings()" :id="$id('settings-input')">
+                <button @click="char.color=char.defaults.color;char.border_color=char.defaults.border_color;SaveSettings()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 
@@ -1123,8 +1186,8 @@ background-color: #5c5c5c;">
             <label style="font-size:14px;" :for="$id('modifier-input')">Arena Color</label>
          
             <div style="display:flex; margin-top:2px;">
-                <input style="flex-grow: 1; width:100%;" type="color" @input="arena.border_color=pSBC(-.96,arena.color)" x-model="arena.color" :id="$id('modifier-input')">
-                <button @click="arena.color=arena.defaults.color;arena.border_color=arena.defaults.border_color"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+                <input style="flex-grow: 1; width:100%;" type="color" @input="arena.border_color=pSBC(-.96,arena.color);SaveSettings()" x-model="arena.color" :id="$id('modifier-input')">
+                <button @click="arena.color=arena.defaults.color;arena.border_color=arena.defaults.border_color;SaveSettings()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
             </div>
         </div>
 		
@@ -1133,8 +1196,8 @@ background-color: #5c5c5c;">
                 <label style="font-size:14px;" :for="$id('modifier-input')">Safe Zone Color</label>
              
                 <div style="display:flex; margin-top:2px;">
-                    <input style="flex-grow: 1; width:100%;" type="color" @input="safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'" x-model="safe_zone.border_color" :id="$id('modifier-input')">
-                    <button @click="safe_zone.border_color='#4caf50';safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66'"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+                    <input style="flex-grow: 1; width:100%;" type="color" @input="safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66';SaveSettings()" x-model="safe_zone.border_color" :id="$id('modifier-input')">
+                    <button @click="safe_zone.border_color='#4caf50';safe_zone.color = pSBC(0.35,safe_zone.border_color)+'66';SaveSettings()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
                 </div>
             </div>
 		
@@ -1143,8 +1206,8 @@ background-color: #5c5c5c;">
                 <label style="font-size:14px;" :for="$id('modifier-input')">End Zone Color</label>
              
                 <div style="display:flex; margin-top:2px;">
-                    <input style="flex-grow: 1; width:100%;" type="color" @input="end_zone.color = pSBC(0.35,end_zone.border_color)+'66'" x-model="end_zone.border_color" :id="$id('modifier-input')">
-                    <button @click="end_zone.border_color='#7900ff';end_zone.color = pSBC(0.35,end_zone.border_color)+'66'"><span style="font-size:14px; font-weight:bold;">↻</span></button>
+                    <input style="flex-grow: 1; width:100%;" type="color" @input="end_zone.color = pSBC(0.35,end_zone.border_color)+'66';SaveSettings()" x-model="end_zone.border_color" :id="$id('modifier-input')">
+                    <button @click="end_zone.border_color='#7900ff';end_zone.color = pSBC(0.35,end_zone.border_color)+'66';SaveSettings()"><span style="font-size:14px; font-weight:bold;">↻</span></button>
                 </div>
             </div>
 
@@ -1630,7 +1693,7 @@ const pSBC=(p,c0,c1,l)=>{
 
 
     </script>
-    <script src="alpine-toolkit.js" defer></script>
-	<script defer src="alpine.js"></script>
+    <script src="res/alpine-toolkit.js" defer></script>
+	<script defer src="res/alpine.js"></script>
 </body>
 </html>
