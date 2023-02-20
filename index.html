@@ -94,7 +94,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.4.1',
+            version: '1.5.0',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -109,14 +109,23 @@ background-color: #5c5c5c;">
             { 
                 id: 1, 
                 name: 'Normal Linear Modifier', 
-                desc: 'Adds one increment to each modifier per level.'
+                desc: 'Adds one increment to each modifier per level. (builds each level)'
             },
             { 
                 id: 2, 
                 name: 'Normal Random Combo', 
-                desc: 'Randomly distributes total increments to active modifiers. +1 modifier increment per level per modifier.'
-            }
-            //{ id: 3, name: 'Timed' }
+                desc: 'Randomly distributes total increments to active modifiers. +1 modifier increment per level per modifier. (random distribution every level)'
+            },
+            { 
+                id: 3, 
+                name: 'Timed Linear Modifier', 
+                desc: 'Adds one increment to each modifier every 6 seconds. (builds each level). Enemies spawn in center.'
+            },
+            { 
+                id: 4, 
+                name: 'Timed Random Modifier', 
+                desc: 'Adds one increment to a random modifier for each modifier every 6 seconds. (builds each level). Enemies spawn in center.'
+            },
             ],            
             modifiers: [],
             modifier_increments: [-1,-1,-1,-1,-1,-1,-1],
@@ -129,9 +138,13 @@ background-color: #5c5c5c;">
             random_enemy_color: true,
             game_start: false,
             timed: false,
+            time: 0,
+            timed_increment: 6000, //how often in milliseconds to update modifiers (level) in timed mode
+            timed_inc_left: null, //just a temporary variable to track how much until we update modifiers, if its 0 update them and reset to timed_increment
+            timed_update: 1000, //how often the timer ticks in ms
             balance: {
-                linear_weight_decrease: 0.1, //for linear game mode: the weight amount every modifier increment for each new modifier, 0 = no change for linear, 0.25 = 25% easier for linear, 1 = for every additional modifier, increment amount divided by another full number
-                random_mode_weight: 6 //for random combo game mode: start difficult... for every modifier, if # modifiers != 0, number of modifiers*random_mode_weight starting level, else 1
+                linear_weight_decrease: 0.1, //the weight amount every modifier increment for each new modifier, 0 = no change, 0.25 = 25% easier, 1 = for every additional modifier, increment amount divided by another full number
+                random_mode_weight: 6 //for random combo game mode: start difficult... for every modifier, if # modifiers != 0, number of modifiers*random_mode_weight starting level, else 1   //CURRENTLY NOT USING
             }
         },
         arena: { 
@@ -318,6 +331,12 @@ background-color: #5c5c5c;">
 
             
             $interval(() => this.UpdateGame(), 1000/this.game.fps);
+
+            if (this.game.timed)
+            {
+                this.game.timed_inc_left = this.game.timed_increment;
+                $interval(() => this.UpdateTimed(), this.game.timed_update);
+            }
             
             this.$nextTick(() => 
 				{ 
@@ -419,27 +438,47 @@ background-color: #5c5c5c;">
 
 			this.ResetCharacterPosition();
 
-            this.safe_zone.x = this.arena.x;
-            this.safe_zone.y = this.arena.y-1;   
-            this.safe_zone.height = this.arena.height;   
-            this.safe_zone.width = Math.floor(this.arena.width/10);  
-
-            if (this.safe_zone.width < this.char.size + 6)
+            if (!this.game.timed)
             {
-                this.safe_zone.width = this.char.size + 6;
-            }
-                    
-            this.end_zone.y = this.arena.y-1;   
-            this.end_zone.height = this.arena.height;   
-            this.end_zone.width = Math.floor(this.arena.width/20); 
-            this.end_zone.x = this.arena.x + this.arena.width - this.end_zone.width;
+                 this.safe_zone.x = this.arena.x;
+                 this.safe_zone.y = this.arena.y-1;   
+                 this.safe_zone.height = this.arena.height;   
+                 this.safe_zone.width = Math.floor(this.arena.width/10);  
 
-            $('#'+this.safe_zone.id).fadeIn();
-            $('#'+this.end_zone.id).fadeIn();
+                 if (this.safe_zone.width < this.char.size + 6)
+                 {
+                     this.safe_zone.width = this.char.size + 6;
+                 }
+
+                 this.end_zone.y = this.arena.y-1;   
+                 this.end_zone.height = this.arena.height;   
+                 this.end_zone.width = Math.floor(this.arena.width/20); 
+                 this.end_zone.x = this.arena.x + this.arena.width - this.end_zone.width;
+             
+                 $('#'+this.safe_zone.id).fadeIn();
+                 $('#'+this.end_zone.id).fadeIn();
+            }
+            else
+            {
+                this.safe_zone.width=0;
+                this.safe_zone.height=0;
+                this.end_zone.height = 0;  
+                this.end_zone.width = 0;
+            }
         },
         UpdateGame() {
             this.UpdateCharacter();
             this.UpdateEnemies(); 
+        },
+        UpdateTimed() {
+            this.game.time += (this.game.timed_update/1000);
+            this.game.timed_inc_left-=this.game.timed_update;
+
+            if (this.game.timed_inc_left <= 0)
+            {
+                this.Character_GotInEndzone();
+                this.game.timed_inc_left = this.game.timed_increment;
+            }            
         },
         UpdateCharacter() {
             if (this.char.going)
@@ -496,6 +535,7 @@ background-color: #5c5c5c;">
             }
             this.char.going = false;
             this.mi.active = false;
+
             this.char.x = this.arena.x+5;
             this.char.y = this.arena.y-(this.char.size/2)+Math.floor(this.arena.height/2);
 
@@ -757,7 +797,15 @@ background-color: #5c5c5c;">
             this.arena.border_color = oldArenaBorder;
             $('.pulse_gotHit').removeClass('pulse_gotHit');
 
-            this.ResetCharacterPosition();
+            if (!this.game.timed)
+            {
+                this.ResetCharacterPosition();
+            }
+            else
+            {
+                alert('You died!\n\n---Stats---\nMode:'+this.game.modes[this.game.mode].name+'\nTime:'+this.game.time+' seconds\nLevel: '+this.game.level+'\nModifiers: '+this.GetModifiersString()+'\n\nclick OK to restart');
+                location.reload();
+            }
         },
         Character_GotInEndzone()
         {
@@ -782,7 +830,10 @@ background-color: #5c5c5c;">
 
             this.IncrementModifiers();
 
-            this.SetupStartPositions(); 
+            if (!this.game.timed)
+            {
+                this.SetupStartPositions(); 
+            }            
         },
         ResetModifiersToZero() {
             for (var i = 0; i < this.game.modifier_increments.length; i++) 
@@ -832,6 +883,7 @@ background-color: #5c5c5c;">
                 }
 
                 this.AssignModifiers(); 
+                this.RedrawEnemies(); 
             }
             else if (this.game.mode===2 || (bypass)) //random combo mode, or sandbox demonstration
             {
@@ -847,9 +899,30 @@ background-color: #5c5c5c;">
                 }
 
                 this.AssignModifiers(); 
+                this.RedrawEnemies(); 
             }
-           
-            this.RedrawEnemies();           
+            else if (this.game.timed)
+            {
+                if (this.game.mode===3)
+                {
+                    for (var i = 0; i < this.game.modifiers.length; i++) 
+                    {
+                        this.game.modifier_increments[this.game.potential_modifiers.indexOf(this.game.modifiers[i])] = this.game.level-1;
+                    }
+
+                    this.AssignModifiers();
+                }
+                else if (this.game.mode===4)
+                {
+                    //for every modifier, add to a random modifier
+                    for (var i = 0; i < this.game.modifiers.length; i++) 
+                    {
+                        this.game.modifier_increments[randomIntFromInterval(0,this.game.modifiers.length-1)]++;
+                    }
+
+                    this.AssignModifiers();
+                }
+            }                     
         },
         AssignModifiers()
         {
@@ -1026,10 +1099,16 @@ background-color: #5c5c5c;">
         SelectedGamemode(gamemode)
         {
             this.game.mode = gamemode;
+            this.game.timed = false;
             
             if (this.game.mode===0)
             {
                 this.StartGame();
+            }
+            else if (this.game.mode===3 || this.game.mode===4)
+            {
+                this.game.timed = true;
+                this.game.modifiers = ['Number of Enemies'];
             }
         },
         CreateEnemy()
@@ -1060,9 +1139,16 @@ background-color: #5c5c5c;">
                 enemy_speedy = tempspd;
             }
 
-
             let enemy_startx = randomIntFromInterval(enemy_sizex+this.arena.x+this.safe_zone.width+2,this.arena.width+this.arena.x-enemy_sizex);
             let enemy_starty = randomIntFromInterval(enemy_sizey+this.arena.y,this.arena.height+this.arena.y-enemy_sizey);
+
+
+            if (this.game.timed)
+            {
+                enemy_startx = (this.arena.width/2)-enemy_sizex+this.arena.x;
+                enemy_starty = (this.arena.height/2)-enemy_sizey+this.arena.y;
+            }
+
 
             let enemy_id = $id('enemy');
 
@@ -1230,10 +1316,10 @@ background-color: #5c5c5c;">
                 text-overflow: ellipsis;
                 white-space: nowrap;">
                     <div style="color:rgb(236, 236, 236);"><span style="font-weight:bold; font-size:16px; margin-right:5px;">Mode:</span><span x-text="game.mode!==null?game.modes[game.mode].name:''" style="font-size:18px; font-weight:normal;"></span></div>
-                    <div x-show="game.mode!==0" style="margin-top:2px; color:#dcbcff;"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Modifiers:</span><span x-html="GetModifiersHTML()" :title="GetModifiersString()" style="font-size:16px; font-weight:normal;"></span></div>
+                    <div :style="game.mode!==0 ? {display: 'flex'} : {display: 'none'}" style="display: flex; margin-top:2px; color:#dcbcff; align-items: start;"><span style="font-weight:bold; font-size:14px; margin-right:5px;">Modifiers:</span><span x-html="GetModifiersHTML()" :title="GetModifiersString()" style="font-size:16px; font-weight:normal;display: flex; flex-wrap: wrap"></span></div>
                     <div x-show="game.mode===0" style="margin-left: auto; margin-right: auto; display:flex; margin-top:2px;"><button @click="SandboxRandomize(0)" class="hover" style="margin-right:4px; background:#d7ffd7;">Randomize Easy</button><button @click="SandboxRandomize(1)" class="hover" style="margin-right:4px; background:#fdfda6;">Randomize Medium</button><button @click="SandboxRandomize(2)" class="hover" style="margin-right:4px; background:#f5ca79;">Randomize Hard</button><button class="hover" style="background: #ff7575;" @click="SandboxRandomize(3)">Randomize Impossible</button></div>
                 </div>
-                <div style="align-self: end; text-align:right;">
+                <div style="align-self: end; text-align:right; white-space: nowrap;">
                     <div style="display:flex; flex-direction:column;">
                         <div x-show="game.mode!==0" style="margin-bottom:2px;"><span style="color:white; font-size:18px;" x-text="'Level ' + game.level"></span></div>
                         <div><span style="color:#ffaaaa;" x-text="game.deaths+' deaths'"></span></div>
@@ -1308,7 +1394,7 @@ background-color: #5c5c5c;">
 
             <div style="text-align:center; margin-bottom:10px; font-weight:700; font-size:90%;">Arena</div>
 
-        <div x-show="game.mode===0" style="margin-bottom:8px;" x-id="['modifier-input']">
+        <div style="margin-bottom:8px;" x-id="['modifier-input']">
             <label :style="game.modifier_increments[6]>=0 ? {color: '#a95efb'} : {color: 'inherit'}" style="font-size:14px;" :for="$id('modifier-input')">Arena Width<sup x-show="game.mode!==0 && game.modifier_increments[6]>=0" x-text="game.modifier_increments[6]"></sup></label>
          
             <div style="display:flex; margin-top:2px;">
@@ -1585,7 +1671,7 @@ background-color: #5c5c5c;">
         <div style="color:white; font-size:24px; margin-top:20px; margin-bottom:12px;">Choose modifiers:</div>
 
         <template x-for="(modifiers,index) in game.potential_modifiers">
-            <label :for="'chk_'+modifiers.replace(' ','')" :class="modifiers==='Arena Width' ? '' : 'hover'" :style="game.modifiers.indexOf(modifiers) != -1 ? {background: '#dcbcff'} : (modifiers==='Arena Width' ? {background: '#a1a1a1', opacity:'.2', cursor:'not-allowed'} : {background: '#a1a1a1'})" style="cursor:pointer; border:4px solid; font-size:16px; padding: 10px 5px; width:100%; margin-top:8px;"><input type="checkbox" :disabled="modifiers==='Arena Width'" style="display:none;" :id="'chk_'+modifiers.replace(' ','')" :name="'chk_'+modifiers.replace(' ','')" :value="modifiers" x-model="game.modifiers"><span x-text="modifiers"></span></label>
+            <label :for="'chk_'+modifiers.replace(' ','')" :class="(modifiers==='Arena Width' && !game.timed) || (modifiers==='Number of Enemies' && game.timed) ? '' : 'hover'" :style="game.modifiers.indexOf(modifiers) != -1 ? {background: '#dcbcff'} : (modifiers==='Arena Width' && !game.timed ? {background: '#a1a1a1', opacity:'.2', cursor:'not-allowed'} : {background: '#a1a1a1'})" style="cursor:pointer; border:4px solid; font-size:16px; padding: 10px 5px; width:100%; margin-top:8px;"><input type="checkbox" :disabled="(modifiers==='Arena Width' && !game.timed) || (modifiers==='Number of Enemies' && game.timed)" style="display:none;" :id="'chk_'+modifiers.replace(' ','')" :name="'chk_'+modifiers.replace(' ','')" :value="modifiers" x-model="game.modifiers"><span x-text="modifiers"></span></label>
         </template>
 
         <button @click="game.modifiers.length>0 ? StartGame() : alert('pick some modifiers')" class="hover" style="margin-top:32px; cursor:pointer; background:white; border:3px solid; font-size:16px; padding: 8px 8px;">Start Game<div style="margin-top: 4px;font-size: 80%;color: rgb(169, 94, 251);"><span x-text="game.modifiers.length+' modifier'"></span><span x-show="game.modifiers.length!==1">s</span></div></button>
