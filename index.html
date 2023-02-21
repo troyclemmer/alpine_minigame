@@ -94,7 +94,7 @@ background-color: #5c5c5c;">
 
     <div x-data="{
         game: { 
-            version: '1.5.2',
+            version: '1.5.3',
             title: 'Alpine.js Dodge',
             author_html: 'by <a style=\'color:rgb(211, 211, 211);\' target=\'_blank\' href=\'https://www.troyclemmer.com/\'>Troy Clemmer</a>',
             id: 'game_board',
@@ -203,7 +203,7 @@ background-color: #5c5c5c;">
                 border_color: '#7900ff',
                 size_min_diff: 5,
                 size_inc_diff: 4,
-                speed_min_diff: 5,
+                speed_min_diff: 7,
                 speed_inc_diff: .25
             },
             x: 0,
@@ -642,7 +642,7 @@ background-color: #5c5c5c;">
 
             let enemy = $('#'+enemy_object.id);
 
-            if (enemy[0].getBoundingClientRect().left < boundary.left + this.safe_zone.width + 2)
+            if (enemy[0].getBoundingClientRect().left < boundary.left + this.safe_zone.width + 1)
             {
                 //stop X position
                 enemy_object.x = boundary.left + this.safe_zone.width + 2;
@@ -653,7 +653,7 @@ background-color: #5c5c5c;">
             if (enemy[0].getBoundingClientRect().right > boundary.right)
             {
                 //stop X position
-                enemy_object.x = boundary.right - enemy_object.width;
+                enemy_object.x = boundary.right - enemy_object.width - 1;
 
                 //bounce X speed
                 this.Enemy_BounceX(enemy_object);
@@ -661,7 +661,7 @@ background-color: #5c5c5c;">
             if (enemy[0].getBoundingClientRect().top < boundary.top)
             {
                 //stop Y position
-                enemy_object.y = boundary.top;
+                enemy_object.y = boundary.top + 1;
 
                 //bounce Y speed
                 this.Enemy_BounceY(enemy_object);
@@ -669,7 +669,7 @@ background-color: #5c5c5c;">
             if (enemy[0].getBoundingClientRect().bottom  > boundary.bottom)
             {
                 //stop Y position
-                enemy_object.y = boundary.bottom - enemy_object.height;
+                enemy_object.y = boundary.bottom - enemy_object.height - 1;
 
                 //bounce Y speed
                 this.Enemy_BounceY(enemy_object);
